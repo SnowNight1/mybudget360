@@ -13,7 +13,7 @@ jobs:
 
       - uses: pnpm/action-setup@v3
         with:
-          version: 8         # ✅ 去掉 { } 并按 YAML 规范换行缩进
+          version: 10         # ✅ 去掉 { } 并按 YAML 规范换行缩进
 
       - name: Install deps
         # 如果代码在子目录，取消下一行注释并改路径；否则删掉
