@@ -1,16 +1,25 @@
-name: Build & Test
+---
+name: Build & Test           # 工作流名称，随意
 
-on: [push]
+on:
+  - push                     # 使用布尔格式而不是数组简写
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build:                     # Job 名
+    runs-on: ubuntu-latest   # 运行环境
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v3
-        with: { version: 8 }
+        with:
+          version: 8         # ✅ 去掉 { } 并按 YAML 规范换行缩进
 
-      - run: pnpm install --frozen-lockfile
+      - name: Install deps
+        # 如果代码在子目录，取消下一行注释并改路径；否则删掉
+        # working-directory: ./mybudget360
+        run: pnpm install --frozen-lockfile
 
-      - run: pnpm build      # Next.js 打包
+      - name: Build
+        # working-directory: ./mybudget360
+        run: pnpm build
