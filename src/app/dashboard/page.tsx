@@ -1,7 +1,7 @@
   // app/page.tsx
   import { redirect } from "next/navigation";
   import { getServerSession } from "next-auth";
-  import { authOptions } from "../api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
   import { Button } from "@/components/ui/button";
   import { signIn } from "next-auth/react";
   
