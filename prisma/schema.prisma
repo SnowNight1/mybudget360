@@ -1,0 +1,85 @@
+// This is your Prisma schema file
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String?
+  image         String?
+  emailVerified  DateTime?
+  currency      String     @default("JPY")  // 自定义字段
+  monthlyBudget Int?                        // 自定义字段
+  expenses      Expense[]
+  categories    Category[]
+  createdAt     DateTime   @default(now())
+
+  // 🔹 NextAuth 需要的字段
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String
+  color    String
+  userId   String?
+  user     User?     @relation(fields: [userId], references: [id])
+  expenses Expense[]
+}
+
+model Expense {
+  id         Int      @id @default(autoincrement())
+  amount     Float
+  currency   String   @default("JPY")
+  date       DateTime @default(now())
+  note       String?
+  userId     String
+  categoryId Int
+  user       User     @relation(fields: [userId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
+}
+
+model Account {
+  id                 Int     @id @default(autoincrement())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
