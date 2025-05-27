@@ -1,12 +1,16 @@
-name: CI
+name: Build & Test
+
 on: [push]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v3
         with: { version: 8 }
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
 
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build      # Next.js 打包
