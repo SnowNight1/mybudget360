@@ -10,6 +10,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum AmountInputType {
+  TOTAL           // 输入的是“总金额”
+  PER_INSTALLMENT // 输入的是“每期支付金额”
+}
+
 model User {
   id            String     @id @default(cuid())
   email         String     @unique
@@ -31,9 +36,14 @@ model Category {
   id       Int       @id @default(autoincrement())
   name     String
   color    String
-  userId   String?
-  user     User?     @relation(fields: [userId], references: [id])
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+
+  parentId Int?
+  parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryHierarchy")
   expenses Expense[]
+  @@unique([name, userId, parentId])
 }
 
 model Expense {
@@ -46,6 +56,10 @@ model Expense {
   categoryId Int
   user       User     @relation(fields: [userId], references: [id])
   category   Category @relation(fields: [categoryId], references: [id])
+  isNextMonthPayment   Boolean          @default(false)   // 是否下个月支付（必填）
+  isInstallment        Boolean          @default(false)   // 是否分期
+  installmentCount     Int?                             // 分期次数（可选，null 表示一次性）
+  amountInputType      AmountInputType @default(TOTAL)  // TOTAL=总金额，PER_INSTALLMENT=每期金额
 }
 
 model Account {
