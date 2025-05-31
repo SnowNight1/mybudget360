@@ -10,8 +10,8 @@ export default function CategoriesPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const [, setIsModalOpen] = useState<boolean>(false);
-  const [, setEditCategory] = useState<CategoryData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [editCategory, setEditCategory] = useState<CategoryData | null>(null);
 
   const fecthCategories = async () => {
     setLoading(true);
