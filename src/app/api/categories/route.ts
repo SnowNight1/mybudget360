@@ -65,17 +65,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: '名称和颜色是必需的' }, { status: 400 });
     }
 
-    if (!/^[a-zA-Z0-9]+$/.test(name)) {
-      return NextResponse.json({ message: '名称只能包含字母和数字' }, { status: 400 });
-    }
+    // if (!/^[a-zA-Z0-9]+$/.test(name)) {
+    //   return NextResponse.json({ message: '名称只能包含字母和数字' }, { status: 400 });
+    // }
 
+    if (!name || typeof name !== 'string' || name.trim() === '') { // 检查是否为空或只包含空格
+      return NextResponse.json({ message: '名称不能为空' }, { status: 400 });
+    }
+    if (name.length > 50) { // 假设名称长度限制为 50 个字符
+      return NextResponse.json({ message: '名称不能超过 50 个字符' }, { status: 400 });
+    }
     if(!/^#[0-9A-Fa-f]{6}$/.test(color)) {
       return NextResponse.json({ message: '颜色必须是有效的十六进制颜色代码' }, { status: 400 });
     }
 
     const existingCategory = await prisma.category.findFirst({
       where: {
-        name,
+        name:name.trim(),
         userId: session.user.id,
         parentId: parentId || null,
       },})

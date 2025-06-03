@@ -1,32 +1,33 @@
 // src/lib/auth.ts
-import { type NextAuthOptions, type DefaultSession } from "next-auth";
+import {
+  type NextAuthOptions,
+  type DefaultSession,
+} from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
-//console.log("[auth.ts] Initializing authOptions...");
-//console.log("[auth.ts] GOOGLE_ID available:", !!process.env.GOOGLE_ID);
-//console.log("[auth.ts] GOOGLE_SECRET available:", !!process.env.GOOGLE_SECRET);
-//console.log("[auth.ts] NEXTAUTH_SECRET available:", !!process.env.NEXTAUTH_SECRET);
-
-// 扩展 Session User 类型以包含 id
 declare module "next-auth" {
   interface Session {
     user: DefaultSession["user"] & {
-      id: string; // 假设你的 User id 是 string 类型 (cuid)
-      // 如果有其他你想在 session.user 中访问的自定义字段，也在这里添加
-      // currency?: string;
-      // monthlyBudget?: number;
+      id: string;
+      currency: string;
+      monthlyBudget?: number | null; // 期望 null
     };
+  }
+  interface User{ // 扩展原始 User
+    id: string;
+    currency: string;
+    monthlyBudget?: number | null; // Prisma 是 number | null
   }
 }
 
-// 如果使用 JWT 策略，也需要扩展 JWT 类型
 declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
-    // currency?: string;
-    // monthlyBudget?: number;
+    currency?: string;
+    monthlyBudget?: number | null; // 与 Prisma 和 Session 保持一致 (number | null)
+                                   // 如果仍然报错，可以尝试 number | null | undefined
   }
 }
 
@@ -38,37 +39,36 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_SECRET!,
     }),
   ],
-  session: { strategy: "jwt" }, // 使用 JWT 策略
+  session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async jwt({ token, user, account, profile }) {
-      //console.log("[auth.ts] JWT Callback invoked.");
-      // 首次登录时 (user 对象存在)，将用户 ID 添加到 JWT token
-      if (user) {
+    async jwt({ token, user, trigger, session: updateSessionData }) { // `session` 参数在 trigger='update' 时有值
+      if (user) { // 首次登录或注册
         token.id = user.id;
-        //console.log(`[auth.ts] JWT Callback: User found (ID: ${user.id}), token updated:`, token);
-        // 如果你想添加 Prisma User 模型中的其他字段到 token
-        // const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
-        // if (dbUser) {
-        //   token.currency = dbUser.currency;
-        //   token.monthlyBudget = dbUser.monthlyBudget;
-        // }
-      } else {
-        //console.log("[auth.ts] JWT Callback: User not found, using existing token:", token);
+        // `user` 对象来自 PrismaAdapter，应包含数据库字段
+        // (user as any) 用于访问我们扩展的字段，因为此时 `user` 的类型可能还是 NextAuth 基础 User
+        token.currency = (user as any).currency || "JPY"; // 提供默认值
+        token.monthlyBudget = (user as any).monthlyBudget === undefined ? null : (user as any).monthlyBudget; // 确保是 null 而不是 undefined
+      }
+
+      // 当通过 useSession().update() 更新 session 时
+      if (trigger === "update" && updateSessionData) {
+        if (updateSessionData.monthlyBudget !== undefined) {
+          token.monthlyBudget = updateSessionData.monthlyBudget; // updateSessionData.monthlyBudget 可以是 number 或 null
+        }
+        if (updateSessionData.currency !== undefined) { // 如果也允许更新 currency
+          token.currency = updateSessionData.currency;
+        }
       }
       return token;
     },
     async session({ session, token }) {
-      //console.log("[auth.ts] Session Callback invoked.");
-      //console.log("[auth.ts] Session Callback: Received token:", token);
-      // 从 JWT token 中获取用户 ID 并添加到 session.user 对象
       if (token && session.user) {
-        //console.log("[auth.ts] Session Callback: Session user updated:", session.user);
-        session.user.id = token.id as string; // 类型断言，因为我们知道我们设置了它
-        // session.user.currency = token.currency as string;
-        // session.user.monthlyBudget = token.monthlyBudget as number;
-      } else {
-        console.warn("[auth.ts] Session Callback: No token or session.user found, session not updated.");
+        session.user.id = token.id as string;
+        session.user.currency = token.currency as string;
+        // 如果 token.monthlyBudget 是 undefined (jwt 中没有设置)，这里会是 undefined
+        // 如果 token.monthlyBudget 是 null，这里会是 null
+        session.user.monthlyBudget = token.monthlyBudget;
       }
       return session;
     },
