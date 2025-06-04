@@ -10,7 +10,7 @@ export const CreateExpenseSchema = z.object({
     }),
   }),
   categoryId: z.coerce.number().int().positive({ message: "请选择一个分类" }),
-  note: z.string().max(100, { message: "备注不能超过100个字符" }).optional(),
+  note: z.string().max(100, { message: "备注不能超过100个字符" }).nullable().optional(),
 
   // ****** 主要修改在这里 ******
   isNextMonthPayment: z.boolean().optional(), // 移除了 .default(false)

@@ -6,12 +6,14 @@ import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateExpenseSchema, CreateExpenseInput, CategoryBasic } from '@/types';
 import { AmountInputType } from '@prisma/client';
+import { ExpenseWithCategory } from '@/app/dashboard/page';
 
 interface TransactionFormProps {
   categories: CategoryBasic[];
   onClose: () => void;
-  onSuccess: (newExpense: any) => void;
+  onSuccess: (newExpense: ExpenseWithCategory) => void;
   defaultValues?: Partial<CreateExpenseInput>; // Props 传入的 defaultValues 可以是部分的
+  expenseId?: number; // 如果需要编辑现有的消费，可以传入 expenseId
 }
 
 // 定义表单上下文类型（如果你的 resolver 使用它，通常是 any）
@@ -57,6 +59,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   onClose,
   onSuccess,
   defaultValues: propDefaultValues, // 重命名以避免混淆
+  expenseId, // 如果需要编辑现有的消费，可以传入 expenseId
 }) => {
   const {
     register,
@@ -80,6 +83,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const onSubmit: SubmitHandler<CreateExpenseInput> = async (data) => {
     // data.isNextMonthPayment 和 data.isInstallment 在这里将是 boolean | undefined
     // 如果你在API请求中需要它们是明确的 boolean，你可能需要在这里转换：
+
+    const method = expenseId ? 'PUT' : 'POST'; // 如果有 expenseId，使用 PUT 更新，否则使用 POST 创建新消费
+    const url = expenseId ? `/api/transactions/${expenseId}` : '/api/transactions';
     const apiData = {
       ...data,
       isNextMonthPayment: data.isNextMonthPayment ?? false,
@@ -90,10 +96,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     };
 
     try {
-      const response = await fetch('/api/transactions', {
-        method: 'POST',
+      const response = await fetch(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(apiData), // 发送处理过的 apiData
+        body: JSON.stringify(data),
       });
 
       // ... (后续的响应处理逻辑不变)
@@ -119,7 +125,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         return;
       }
 
-      reset(); // 重置表单为 prepareFormDefaultValues 返回的初始值
+      reset(prepareFormDefaultValues(propDefaultValues));// 重置表单为 prepareFormDefaultValues 返回的初始值
       onSuccess(responseData);
     } catch (error) {
       console.error('提交表单失败:', error);
@@ -303,7 +309,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
         >
-          {isSubmitting ? '保存中...' : '保存消费'}
+           {isSubmitting ? '保存中...' : (expenseId ? '更新消费' : '创建消费')}
         </button>
       </div>
     </form>

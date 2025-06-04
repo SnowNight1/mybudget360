@@ -132,7 +132,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       },
       include: { // 返回更新后的数据，包含分类信息
         category: {
-          select: { name: true, color: true }
+          select: { id: true, name: true, color: true, parentId: true }
         }
       }
     });

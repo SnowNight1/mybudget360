@@ -3,9 +3,9 @@
 
 import {useState, useEffect, use } from 'react';
 import TransactionForm from '@/components/TransactionForm';
-import { CategoryBasic } from '@/types';
+import { CategoryBasic, CreateExpenseInput } from '@/types';
 import { ExpenseWithCategory } from './page';
-import { set } from 'zod';
+//import { set } from 'zod';
 // import BudgetCard from '@/components/BudgetCard';
 // import Chart from '@/components/Chart';
 // import { Expense } from '@prisma/client'; // 将来会用到 Expense 类型
@@ -39,6 +39,8 @@ export default function DashboardClientPage({
     // 例如，添加新消费后，你可能想重新获取消费列表或在本地更新
     const [categories, setCategories] = useState<CategoryBasic[]>(initialCategories);
     const [expenses, setExpenses] = useState<ExpenseWithCategory[]>(initialExpenses);
+    const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
+    const [editingExpenseData, setEditingExpenseData] = useState<Partial<CreateExpenseInput> | null>(null);
     // 如果分类是动态变化的，并且你想在客户端保持最新，可以添加一个 refetch 逻辑
     // 但通常初始加载就够了，除非有添加/编辑分类的功能
     useEffect(() => {
@@ -52,20 +54,45 @@ export default function DashboardClientPage({
       setExpenses(initialExpenses);
     }, [initialExpenses]);
 
-    const handleOpenModal = () => {
+    const handleOpenModal = (expenseToEdit?: ExpenseWithCategory) => {
+        if (expenseToEdit) {
+            setEditingExpenseId(expenseToEdit.id);
+            // 确保 defaultValues 的 date 是 Date 对象，TransactionForm 的 prepareFormDefaultValues 会处理
+            setEditingExpenseData({
+                ...expenseToEdit,
+                date: new Date(expenseToEdit.date), // 确保日期是 Date 对象
+                // categoryId 已经在 expenseToEdit 中
+                // installmentCount 和 amountInputType 也是可选的
+            });
+            console.log("准备编辑消费记录:", expenseToEdit);
+        } else {
+            setEditingExpenseId(null);
+            setEditingExpenseData(null);
+            console.log("准备添加新消费记录");
+        }
         setIsModalOpen(true);
     };
     const handleCloseModal = () => {
         setIsModalOpen(false);
+        setEditingExpenseId(null); // 重置编辑 ID
+        setEditingExpenseData(null); // 重置编辑数据
     }
 
-    const handleExpenseAdded = (newExpense: any) => {
-        console.log('新消费记录已添加:', newExpense);
-        alert(`消费 "${newExpense.note || newExpense.amount}" 已添加!`);
-        // TODO: 更新消费列表
-        // 1. Optimistic update: setExpenses(prev => [newExpense, ...prev]);
-        // 2. Refetch: 调用一个函数来重新从 API 获取所有消费记录
-        handleCloseModal();
+    const handleTransactionSuccess = (processedExpense: ExpenseWithCategory) => {
+        console.log('消费记录处理成功:', processedExpense);
+        if (editingExpenseId) { // 如果是编辑模式
+            alert(`消费 "${processedExpense.note || processedExpense.amount}" 已更新!`);
+            setExpenses(prevExpenses =>
+                prevExpenses.map(exp =>
+                    exp.id === processedExpense.id ? processedExpense : exp
+                )
+            );
+        } else { // 如果是添加模式
+            alert(`消费 "${processedExpense.note || processedExpense.amount}" 已添加!`);
+            // 新增的记录放在最前面
+            setExpenses(prevExpenses => [processedExpense, ...prevExpenses]);
+        }
+        handleCloseModal(); // 无论是添加还是更新，都关闭模态框
     };
 
   return (
@@ -80,10 +107,10 @@ export default function DashboardClientPage({
             <p className="text-sm text-gray-600">你的默认货币是: {userCurrency}</p>
           </div>
           <button
-            onClick={handleOpenModal}
+            onClick={() => handleOpenModal()}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
-            + 添加消费
+            添加消费
           </button>
         </div>
 
@@ -137,6 +164,12 @@ export default function DashboardClientPage({
                     >
                       金额 ({userCurrency})
                     </th>
+                      <th
+                      scope="col"
+                      className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      操作
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -163,10 +196,16 @@ export default function DashboardClientPage({
                         {expense.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       {/* 你可能还想添加编辑/删除按钮 */}
-                      {/* <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a href="#" className="text-indigo-600 hover:text-indigo-900 mr-2">编辑</a>
-                        <button onClick={() => handleDelete(expense.id)} className="text-red-600 hover:text-red-900">删除</button>
-                      </td> */}
+                      <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleOpenModal(expense)} // 传入当前消费记录进行编辑
+                          className="text-indigo-600 hover:text-indigo-900 mr-2"
+                        >
+                          编辑
+                        </button>
+                        {/* 你可能还想添加删除按钮 */}
+                        {/* <button onClick={() => handleDelete(expense.id)} className="text-red-600 hover:text-red-900">删除</button> */}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -187,7 +226,9 @@ export default function DashboardClientPage({
               <TransactionForm
                 categories={categories}
                 onClose={handleCloseModal}
-                onSuccess={handleExpenseAdded}
+                onSuccess={handleTransactionSuccess}
+                defaultValues={editingExpenseData || undefined} // 传入编辑数据，或 undefined 表示添加模式
+                expenseId={editingExpenseId || undefined} // 传入消费记录 ID，或 undefined 表示添加模式
               />
             </div>
           </div>
