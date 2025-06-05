@@ -13,7 +13,7 @@ interface RouteParams {
   };
 }
 
-export async function PUT(request: Request, { params }: RouteParams) {
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
     const categoryId = parseInt(params.id, 10);
 
@@ -100,7 +100,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 }
 
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
     const categoryId = parseInt(params.id, 10);
 

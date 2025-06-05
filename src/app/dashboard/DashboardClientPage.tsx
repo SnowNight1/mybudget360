@@ -1,14 +1,54 @@
 //src/app/dashboard/DashboardClientPage.tsx
 "use client";
 
-import {useState, useEffect, use } from 'react';
+import {useState, useEffect, useMemo } from 'react';
 import TransactionForm from '@/components/TransactionForm';
 import { CategoryBasic, CreateExpenseInput } from '@/types';
 import { ExpenseWithCategory } from './page';
+import MonthlySpendingLineChart from '@/components/MonthlySpendingLineChart';
+import CategoryPieChart from '@/components/CategoryPieChart';
+// --- 图表导入 (稍后实际图表组件会用到) ---
+// import { Line, Pie } from 'react-chartjs-2';
+// import {
+//   Chart as ChartJS,
+//   CategoryScale,
+//   LinearScale,
+//   PointElement,
+//   LineElement,
+//   Title,
+//   Tooltip,
+//   Legend,
+//   ArcElement,
+// } from 'chart.js';
+
+// ChartJS.register(
+//   CategoryScale,
+//   LinearScale,
+//   PointElement,
+//   LineElement,
+//   Title,
+//   Tooltip,
+//   Legend,
+//   ArcElement
+// );
+// --- 图表导入结束 ---
 //import { set } from 'zod';
 // import BudgetCard from '@/components/BudgetCard';
 // import Chart from '@/components/Chart';
 // import { Expense } from '@prisma/client'; // 将来会用到 Expense 类型
+
+
+const MonthlySpendingLineChartPlaceholder = ({ month, categoryId }: { month: string, categoryId: string | number | null }) => (
+  <div className="bg-gray-200 p-4 rounded-lg h-64 flex items-center justify-center">
+    <p className="text-gray-500">月度支出折线图 (月份: {month}, 分类: {categoryId || '全部'}) - 占位符</p>
+  </div>
+);
+
+const CategoryPieChartPlaceholder = ({ month, parentCategoryId }: { month: string, parentCategoryId: string | number | null }) => (
+  <div className="bg-gray-200 p-4 rounded-lg h-64 flex items-center justify-center">
+    <p className="text-gray-500">分类饼图 (月份: {month}, 父分类: {parentCategoryId || '所有顶级分类'}) - 占位符</p>
+  </div>
+);
 
 interface DashboardClientPageProps {
   initialCategories: CategoryBasic[];
@@ -18,7 +58,7 @@ interface DashboardClientPageProps {
   userMonthlyBudget?: number | null // 从 session 获取
 }
 
-const formatDate = (datestring: string | Date): string => {
+const formatDate = (datestring: string | Date, options?: Intl.DateTimeFormatOptions): string => {
   const date = new Date(datestring);
   return date.toLocaleDateString('zh-CN', {
     year: 'numeric',
@@ -26,6 +66,16 @@ const formatDate = (datestring: string | Date): string => {
     day: '2-digit',
   });
 }
+
+const getUniqueMonths = (expense: ExpenseWithCategory[]): string[] => {
+  if (!expense || expense.length === 0) return [];
+  const mouths = new Set<string>();
+  expense.forEach(expense => {
+    const date = new Date(expense.date);
+    mouths.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+  });
+  return Array.from(mouths).sort().reverse(); // 返回格式为 YYYY-MM 的字符串数组，按降序排列
+};
 
 export default function DashboardClientPage({
     initialCategories,
@@ -43,6 +93,20 @@ export default function DashboardClientPage({
     const [editingExpenseData, setEditingExpenseData] = useState<Partial<CreateExpenseInput> | null>(null);
     // 如果分类是动态变化的，并且你想在客户端保持最新，可以添加一个 refetch 逻辑
     // 但通常初始加载就够了，除非有添加/编辑分类的功能
+
+    const availableMonthsForCharts = useMemo(() => getUniqueMonths(expenses), [expenses]);
+    const [selectedMonthForCharts, setSelectedMonthForCharts] = useState<string>(availableMonthsForCharts[0] || ''); // 默认选择最新月份
+    const [selectedCategoryForLineChart, setSelectedCategoryForLineChart] = useState<number | 'all'>('all');
+    const [selectedParentCategoryForPieChart, setSelectedParentCategoryForPieChart] = useState<number | 'all'>('all');
+
+    useEffect(() => {
+        if (availableMonthsForCharts.length > 0 && !selectedMonthForCharts) {
+            setSelectedMonthForCharts(availableMonthsForCharts[0]); // 默认选择最新月份
+        } else if (availableMonthsForCharts.length === 0) {
+            setSelectedMonthForCharts(''); // 如果没有可用月份，清空选择
+        }
+    }, [availableMonthsForCharts, selectedMonthForCharts]);
+
     useEffect(() => {
     // 如果 initialCategories 可能在某些情况下为空，但用户实际有分类，
     // 可以在这里再次尝试获取，但这通常表明 SSR/SSG 数据获取有问题
@@ -54,11 +118,27 @@ export default function DashboardClientPage({
       setExpenses(initialExpenses);
     }, [initialExpenses]);
 
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    const currentMonthExpenses = expenses.filter(expense => {
+        const expenseDate = new Date(expense.date);
+        return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+    });
+
+    const totalSpentThisMonth = currentMonthExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+    let remainingBudget: number | null = null;
+    if (userMonthlyBudget !== null && userMonthlyBudget !== undefined) {
+      remainingBudget = userMonthlyBudget - totalSpentThisMonth;
+    }
+
     const handleOpenModal = (expenseToEdit?: ExpenseWithCategory) => {
         if (expenseToEdit) {
             setEditingExpenseId(expenseToEdit.id);
             // 确保 defaultValues 的 date 是 Date 对象，TransactionForm 的 prepareFormDefaultValues 会处理
-            setEditingExpenseData({
+            setEditingExpenseData as any;({
                 ...expenseToEdit,
                 date: new Date(expenseToEdit.date), // 确保日期是 Date 对象
                 // categoryId 已经在 expenseToEdit 中
@@ -95,6 +175,45 @@ export default function DashboardClientPage({
         handleCloseModal(); // 无论是添加还是更新，都关闭模态框
     };
 
+    const handleDelete = async (expenseId: number, expenseDescription: string) => {
+      if (!window.confirm(`确定要删除这条消费记录 (${expenseDescription}) 吗？此操作无法撤销。`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`api/transactions/${expenseId}`,{method:'DELETE'});
+        if (response.ok) {
+          setExpenses(prevExpense => prevExpense.filter(exp => exp.id !== expenseId));
+          alert('消费记录已成功删除');
+
+          if (editingExpenseId === expenseId) {
+            handleCloseModal();
+          }
+        } else {
+          const errorData = await response.json().catch(() => ({message:'删除失败，请稍后再试，服务器未返回有效错误信息'}));
+          console.error('删除消费记录失败 API response:', errorData);
+          alert(`删除失败: ${errorData.message || '服务器返回错误，但未提供详细信息。'}`);
+        }
+      } catch(error) {
+        console.error('删除消费记录时发生网络错误：', error);
+        alert('删除消费记录时发生网络错误，请检查你的链接')
+      }
+    };
+
+  const topLevelCategories = useMemo(() => categories.filter(cat => !cat.parentId), [categories]);
+  const allCategoriesForFilter = useMemo(() => {
+    const getDisplayName = (cat: CategoryBasic, allCats: CategoryBasic[]): string => {
+      if (cat.parentId) {
+        const parent = allCats.find(p => p.id === cat.parentId);
+        return parent ? `${getDisplayName(parent, allCats)} > ${cat.name}` : cat.name;
+      }
+      return cat.name;
+    };
+    return categories
+    .map(c => ({...c, displayName: getDisplayName(c, categories) }))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  }, [categories]);
+
   return (
     <div className="min-h-screen bg-gray-100">
       <main className="container mx-auto p-4">
@@ -119,9 +238,29 @@ export default function DashboardClientPage({
         <div className="bg-white p-6 rounded-lg shadow mb-6">
           <h2 className="text-lg font-medium text-gray-700">预算概览</h2>
           {userMonthlyBudget !== null && userMonthlyBudget !== undefined ? (
+            <div className='space-y-1'>
             <p className="text-gray-700">
             本月预算: <span className="font-semibold">{userMonthlyBudget.toLocaleString()} {userCurrency}</span>
             </p>
+            <p className='text-gray-700'>
+              本月已支出：
+              <span className='font-semibold'
+              style={{
+                color: totalSpentThisMonth > userMonthlyBudget ? 'red' : (totalSpentThisMonth > userMonthlyBudget * 0.8 ? 'orange' : 'green')
+              }}> 
+              {totalSpentThisMonth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {userCurrency}
+              </span>
+            </p>
+            <p className='text-gray-700'>
+              剩余预算：
+              <span className='font-semibold'
+              style={{
+                color: remainingBudget !== null && remainingBudget < 0 ? 'red' : (remainingBudget !== null && remainingBudget >= 0 ? '#10B981' : 'inherit')
+              }}>
+                {remainingBudget !== null ? remainingBudget.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A'} {userCurrency}
+              </span>
+            </p>
+            </div>
           ) : (
             <p className="text-gray-500">
             你还未设置月度预算。
@@ -129,7 +268,77 @@ export default function DashboardClientPage({
             </p>
           )}
         </div>
-          {/* TODO: 计算并显示当月已支出和剩余预算 */}
+        {/* --- START: Charts Section --- */}
+        {expenses.length > 0 && (
+          <div className="bg-white p-6 rounded-lg shadow space-y-8">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">消费分析</h2>
+
+            {selectedMonthForCharts && (
+            <>
+            {/* Line Chart Section */}
+            <div className="border-t pt-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
+                <h3 className="text-lg font-medium text-gray-700">月度支出趋势</h3>
+                <select
+                    value={selectedCategoryForLineChart}
+                    onChange={(e) => setSelectedCategoryForLineChart(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                    className="mt-1 sm:mt-0 block w-full sm:w-auto max-w-xs px-3 py-1.5 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-xs"
+                >
+                    <option value="all">所有分类</option>
+                    {allCategoriesForFilter.map(cat => ( // Use the new sorted list with display names
+                        <option key={cat.id} value={cat.id}>{cat.displayName}</option>
+                    ))}
+                </select>
+              </div>
+              {/* Replace Placeholder with actual component */}
+              <div className="h-[350px] w-full"> {/* Added container with height for responsiveness */}
+                <MonthlySpendingLineChart
+                    expenses={expenses}
+                    selectedMonth={selectedMonthForCharts}
+                    selectedCategoryId={selectedCategoryForLineChart}
+                    categories={categories}
+                    userCurrency={userCurrency}
+                />
+              </div>
+            </div>
+
+            {/* Pie Chart Section */}
+            <div className="border-t pt-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
+                    <h3 className="text-lg font-medium text-gray-700">分类支出占比</h3>
+                    <select
+                        value={selectedParentCategoryForPieChart}
+                        onChange={(e) => setSelectedParentCategoryForPieChart(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                        className="mt-1 sm:mt-0 block w-full sm:w-auto max-w-xs px-3 py-1.5 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-xs"
+                    >
+                        <option value="all">所有一级分类</option>
+                        {topLevelCategories.map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                    </select>
+                </div>
+                {/* Replace Placeholder with actual component */}
+                <div className="h-[350px] w-full"> {/* Added container with height for responsiveness */}
+                  <CategoryPieChart
+                      expenses={expenses}
+                      selectedMonth={selectedMonthForCharts}
+                      selectedParentCategoryId={selectedParentCategoryForPieChart}
+                      categories={categories}
+                      userCurrency={userCurrency}
+                  />
+                </div>
+            </div>
+            </>
+            )}
+            {availableMonthsForCharts.length === 0 && expenses.length > 0 && (
+                 <p className="text-gray-500 italic text-center">有消费记录，但无法确定月份用于图表分析。</p>
+            )}
+          </div>
+        )}
+        {expenses.length === 0 && (
+             <p className="text-gray-500 italic text-center py-8">暂无消费数据，无法生成分析图表。</p>
+        )}
+        {/* --- END: Charts Section --- */}
         {/* Expenses List */}
         <div className="bg-white p-4 md:p-6 rounded-lg shadow">
           <h2 className="text-lg font-medium text-gray-700 mb-4">近期消费记录</h2>
@@ -203,8 +412,10 @@ export default function DashboardClientPage({
                         >
                           编辑
                         </button>
-                        {/* 你可能还想添加删除按钮 */}
-                        {/* <button onClick={() => handleDelete(expense.id)} className="text-red-600 hover:text-red-900">删除</button> */}
+                        <button onClick={() => handleDelete(expense.id,expense.note || `金额 ${expense.amount}`)}
+                          className='text-red-600 hover:text-red-900'>
+                            删除
+                        </button>
                       </td>
                     </tr>
                   ))}
