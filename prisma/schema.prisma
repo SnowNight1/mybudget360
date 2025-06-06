@@ -26,6 +26,7 @@ model User {
   expenses      Expense[]
   categories    Category[]
   createdAt     DateTime   @default(now())
+  defaultRedirectPath String?
 
   // 🔹 NextAuth 需要的字段
   accounts      Account[]

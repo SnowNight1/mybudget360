@@ -2,11 +2,14 @@
 "use client";
 
 import {useState, useEffect, useMemo } from 'react';
+import { subMonths, format, parseISO, addMonths, startOfMonth, set } from 'date-fns';
+import { zhCN } from 'date-fns/locale'; // 用于中文月份标签
 import TransactionForm from '@/components/TransactionForm';
 import { CategoryBasic, CreateExpenseInput } from '@/types';
 import { ExpenseWithCategory } from './page';
 import MonthlySpendingLineChart from '@/components/MonthlySpendingLineChart';
 import CategoryPieChart from '@/components/CategoryPieChart';
+import { get } from 'http';
 // --- 图表导入 (稍后实际图表组件会用到) ---
 // import { Line, Pie } from 'react-chartjs-2';
 // import {
@@ -37,19 +40,6 @@ import CategoryPieChart from '@/components/CategoryPieChart';
 // import Chart from '@/components/Chart';
 // import { Expense } from '@prisma/client'; // 将来会用到 Expense 类型
 
-
-const MonthlySpendingLineChartPlaceholder = ({ month, categoryId }: { month: string, categoryId: string | number | null }) => (
-  <div className="bg-gray-200 p-4 rounded-lg h-64 flex items-center justify-center">
-    <p className="text-gray-500">月度支出折线图 (月份: {month}, 分类: {categoryId || '全部'}) - 占位符</p>
-  </div>
-);
-
-const CategoryPieChartPlaceholder = ({ month, parentCategoryId }: { month: string, parentCategoryId: string | number | null }) => (
-  <div className="bg-gray-200 p-4 rounded-lg h-64 flex items-center justify-center">
-    <p className="text-gray-500">分类饼图 (月份: {month}, 父分类: {parentCategoryId || '所有顶级分类'}) - 占位符</p>
-  </div>
-);
-
 interface DashboardClientPageProps {
   initialCategories: CategoryBasic[];
   initialExpenses: ExpenseWithCategory[]; // 将来传递消费记录
@@ -58,7 +48,7 @@ interface DashboardClientPageProps {
   userMonthlyBudget?: number | null // 从 session 获取
 }
 
-const formatDate = (datestring: string | Date, options?: Intl.DateTimeFormatOptions): string => {
+const formatDateForDisplay = (datestring: string | Date, options?: Intl.DateTimeFormatOptions): string => {
   const date = new Date(datestring);
   return date.toLocaleDateString('zh-CN', {
     year: 'numeric',
@@ -68,13 +58,13 @@ const formatDate = (datestring: string | Date, options?: Intl.DateTimeFormatOpti
 }
 
 const getUniqueMonths = (expense: ExpenseWithCategory[]): string[] => {
-  if (!expense || expense.length === 0) return [];
+  if (!expense || expense.length === 0) return [format(new Date(), 'yyyy-MM')]; // 如果没有消费记录，返回当前月份
   const mouths = new Set<string>();
   expense.forEach(expense => {
     const date = new Date(expense.date);
-    mouths.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+    mouths.add(format(startOfMonth(date), 'yyyy-MM')); // 使用 startOfMonth 确保日期是月初
   });
-  return Array.from(mouths).sort().reverse(); // 返回格式为 YYYY-MM 的字符串数组，按降序排列
+  return Array.from(mouths).sort((a,b) => b.localeCompare(a)); // 返回格式为 YYYY-MM 的字符串数组，按降序排列
 };
 
 export default function DashboardClientPage({
@@ -95,17 +85,29 @@ export default function DashboardClientPage({
     // 但通常初始加载就够了，除非有添加/编辑分类的功能
 
     const availableMonthsForCharts = useMemo(() => getUniqueMonths(expenses), [expenses]);
-    const [selectedMonthForCharts, setSelectedMonthForCharts] = useState<string>(availableMonthsForCharts[0] || ''); // 默认选择最新月份
+    const [selectedMonthForCharts, setSelectedMonthForCharts] = useState<string>(() => {
+      if (availableMonthsForCharts.length > 0) {
+        return availableMonthsForCharts[0]; // 默认选择最新月份
+      }
+      return format(new Date(), 'yyyy-MM'); // 如果没有消费记录，返回当前月份
+    });
     const [selectedCategoryForLineChart, setSelectedCategoryForLineChart] = useState<number | 'all'>('all');
     const [selectedParentCategoryForPieChart, setSelectedParentCategoryForPieChart] = useState<number | 'all'>('all');
+    const [numberOfMonthsForLineChart, setNumberOfMonthsForLineChart] = useState<number>(12); // 默认显示12个月
 
     useEffect(() => {
-        if (availableMonthsForCharts.length > 0 && !selectedMonthForCharts) {
-            setSelectedMonthForCharts(availableMonthsForCharts[0]); // 默认选择最新月份
-        } else if (availableMonthsForCharts.length === 0) {
-            setSelectedMonthForCharts(''); // 如果没有可用月份，清空选择
+      const currentMonths = getUniqueMonths(expenses);
+      if (currentMonths.length > 0) {
+        if (!selectedMonthForCharts || !currentMonths.includes(selectedMonthForCharts)) {
+          setSelectedMonthForCharts(currentMonths[0]); // 如果当前选择的月份不在最新的月份列表中，选择最新月份
         }
-    }, [availableMonthsForCharts, selectedMonthForCharts]);
+      } else {
+        const currentMonthStr = format(new Date(), 'yyyy-MM');
+        if (selectedMonthForCharts !== currentMonthStr) {
+          setSelectedMonthForCharts(currentMonthStr); // 如果没有消费记录，选择当前月份
+        }
+      }
+    }, [expenses, selectedMonthForCharts]);
 
     useEffect(() => {
     // 如果 initialCategories 可能在某些情况下为空，但用户实际有分类，
@@ -119,12 +121,12 @@ export default function DashboardClientPage({
     }, [initialExpenses]);
 
     const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
+    const currentMonthForBudget = currentDate.getMonth();
+    const currentYearForBudget = currentDate.getFullYear();
 
     const currentMonthExpenses = expenses.filter(expense => {
         const expenseDate = new Date(expense.date);
-        return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+        return expenseDate.getMonth() === currentMonthForBudget && expenseDate.getFullYear() === currentYearForBudget;
     });
 
     const totalSpentThisMonth = currentMonthExpenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -138,7 +140,7 @@ export default function DashboardClientPage({
         if (expenseToEdit) {
             setEditingExpenseId(expenseToEdit.id);
             // 确保 defaultValues 的 date 是 Date 对象，TransactionForm 的 prepareFormDefaultValues 会处理
-            setEditingExpenseData as any;({
+            setEditingExpenseData;({
                 ...expenseToEdit,
                 date: new Date(expenseToEdit.date), // 确保日期是 Date 对象
                 // categoryId 已经在 expenseToEdit 中
@@ -214,6 +216,27 @@ export default function DashboardClientPage({
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
   }, [categories]);
 
+  const monthOptionsForSelect = useMemo(() => {
+    if (availableMonthsForCharts.length === 0 || 
+      (availableMonthsForCharts.length === 1 && !expenses.find(exp => format(startOfMonth(new Date(exp.date)), 'yyyy-MM')
+      === availableMonthsForCharts[0]))) {
+        const options = [];
+      let month = new Date();
+      for (let i = 0;  i < 12; i++) {
+        options.push({
+          value:format(month, 'yyyy-MM'),
+          lable: format(month, 'yyyy年M月', { locale: zhCN })
+        });
+        month = subMonths(month, 1);
+      }
+      return options;
+    }
+    return availableMonthsForCharts.map(monthStr => ({
+      value: monthStr,
+      lable: format(parseISO(`${monthStr}-01`), 'yyyy年M月', { locale: zhCN})
+    }));
+  },[availableMonthsForCharts,expenses]);
+
   return (
     <div className="min-h-screen bg-gray-100">
       <main className="container mx-auto p-4">
@@ -269,15 +292,34 @@ export default function DashboardClientPage({
           )}
         </div>
         {/* --- START: Charts Section --- */}
-        {expenses.length > 0 && (
+        {expenses.length > 0 || monthOptionsForSelect.length>0 ? (
           <div className="bg-white p-6 rounded-lg shadow space-y-8">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">消费分析</h2>
-
+            {/*全局图表控件：月份选择 */}
+            <div className='mb-6 pb-4 border-b'>
+              <label htmlFor='charMonthSelect' className='block text-sm font-medium text-gray-700 mb-1'>
+                选择图标月份（将作为时间范围的结束月份）
+              </label>
+              <select
+              id = 'charMonthSelect'
+              value={selectedMonthForCharts}
+              onChange={(e) => 
+                setSelectedMonthForCharts(e.target.value)
+              }
+              className='block w-full sm:w-auto max-w-xs psx-3 py-1.5 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-xs'
+              >
+                {monthOptionsForSelect.map( opt => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.lable}
+                  </option>
+                ))}
+              </select>
+            </div>
             {selectedMonthForCharts && (
             <>
             {/* Line Chart Section */}
-            <div className="border-t pt-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
+            {/* <div className="border-t pt-6"> */}
+              <div className=" flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
                 <h3 className="text-lg font-medium text-gray-700">月度支出趋势</h3>
                 <select
                     value={selectedCategoryForLineChart}
@@ -289,6 +331,18 @@ export default function DashboardClientPage({
                         <option key={cat.id} value={cat.id}>{cat.displayName}</option>
                     ))}
                 </select>
+                <select
+                value={numberOfMonthsForLineChart}
+                onChange={(e) =>
+                  setNumberOfMonthsForLineChart(Number(e.target.value))
+                }
+                className="block w-full sm:w-auto px-3 py-1.5 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-xs"
+                >
+                  <option value={3}>最近3个月</option>
+                  <option value={6}>最近6个月</option>
+                  <option value={12}>最近12个月</option>
+                  <option value={24}>最近24个月</option>
+                </select>
               </div>
               {/* Replace Placeholder with actual component */}
               <div className="h-[350px] w-full"> {/* Added container with height for responsiveness */}
@@ -298,14 +352,17 @@ export default function DashboardClientPage({
                     selectedCategoryId={selectedCategoryForLineChart}
                     categories={categories}
                     userCurrency={userCurrency}
+                    numberOfMonthsToShow={numberOfMonthsForLineChart}
                 />
               </div>
-            </div>
+            {/* </div> */}
 
             {/* Pie Chart Section */}
             <div className="border-t pt-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
-                    <h3 className="text-lg font-medium text-gray-700">分类支出占比</h3>
+                    <h3 className="text-lg font-medium text-gray-700">分类支出占比
+                      ({format(parseISO(`${selectedMonthForCharts}-01`),'yyyy年M月',{locale:zhCN})})
+                    </h3>
                     <select
                         value={selectedParentCategoryForPieChart}
                         onChange={(e) => setSelectedParentCategoryForPieChart(e.target.value === 'all' ? 'all' : Number(e.target.value))}
@@ -330,12 +387,11 @@ export default function DashboardClientPage({
             </div>
             </>
             )}
-            {availableMonthsForCharts.length === 0 && expenses.length > 0 && (
-                 <p className="text-gray-500 italic text-center">有消费记录，但无法确定月份用于图表分析。</p>
+            {!selectedMonthForCharts && (
+                 <p className="text-gray-500 italic text-center">请选择一个月份以查看图表分析。</p>
             )}
           </div>
-        )}
-        {expenses.length === 0 && (
+        ) : (
              <p className="text-gray-500 italic text-center py-8">暂无消费数据，无法生成分析图表。</p>
         )}
         {/* --- END: Charts Section --- */}
@@ -385,7 +441,7 @@ export default function DashboardClientPage({
                   {expenses.map((expense) => (
                     <tr key={expense.id}>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {formatDate(expense.date)}
+                        {formatDateForDisplay(expense.date)}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
                         <span

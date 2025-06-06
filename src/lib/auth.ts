@@ -13,12 +13,14 @@ declare module "next-auth" {
       id: string;
       currency: string;
       monthlyBudget?: number | null; // 期望 null
+      defaultRedirectPath?: string | null;
     };
   }
   interface User{ // 扩展原始 User
     id: string;
     currency: string;
     monthlyBudget?: number | null; // Prisma 是 number | null
+    defaultRedirectPath?: string | null;
   }
 }
 
@@ -26,7 +28,9 @@ declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
     currency?: string;
-    monthlyBudget?: number | null; // 与 Prisma 和 Session 保持一致 (number | null)
+    monthlyBudget?: number | null; 
+    defaultRedirectPath?: string | null;
+    // 与 Prisma 和 Session 保持一致 (number | null)
                                    // 如果仍然报错，可以尝试 number | null | undefined
   }
 }
@@ -49,6 +53,7 @@ export const authOptions: NextAuthOptions = {
         // (user as any) 用于访问我们扩展的字段，因为此时 `user` 的类型可能还是 NextAuth 基础 User
         token.currency = (user as any).currency || "JPY"; // 提供默认值
         token.monthlyBudget = (user as any).monthlyBudget === undefined ? null : (user as any).monthlyBudget; // 确保是 null 而不是 undefined
+        token.defaultRedirectPath = (user as any).defaultRedirectPath || null; 
       }
 
       // 当通过 useSession().update() 更新 session 时
@@ -58,6 +63,9 @@ export const authOptions: NextAuthOptions = {
         }
         if (updateSessionData.currency !== undefined) { // 如果也允许更新 currency
           token.currency = updateSessionData.currency;
+        }
+        if (updateSessionData.defaultRedirectPath !== undefined) {
+          token.defaultRedirectPath = updateSessionData.defaultRedirectPath;
         }
       }
       return token;
@@ -69,6 +77,7 @@ export const authOptions: NextAuthOptions = {
         // 如果 token.monthlyBudget 是 undefined (jwt 中没有设置)，这里会是 undefined
         // 如果 token.monthlyBudget 是 null，这里会是 null
         session.user.monthlyBudget = token.monthlyBudget;
+        session.user.defaultRedirectPath = token.defaultRedirectPath;
       }
       return session;
     },
