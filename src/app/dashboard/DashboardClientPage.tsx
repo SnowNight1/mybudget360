@@ -177,6 +177,11 @@ export default function DashboardClientPage({
         handleCloseModal(); // 无论是添加还是更新，都关闭模态框
     };
 
+    // 处理新分类添加成功
+    const handleCategoryAdded = (newCategory: CategoryBasic) => {
+        setCategories(prevCategories => [...prevCategories, newCategory]);
+    };
+
     const handleDelete = async (expenseId: number, expenseDescription: string) => {
       if (!window.confirm(`确定要删除这条消费记录 (${expenseDescription}) 吗？此操作无法撤销。`)) {
         return;
@@ -494,6 +499,7 @@ export default function DashboardClientPage({
                 categories={categories}
                 onClose={handleCloseModal}
                 onSuccess={handleTransactionSuccess}
+                onCategoryAdded={handleCategoryAdded}
                 defaultValues={editingExpenseData || undefined} // 传入编辑数据，或 undefined 表示添加模式
                 expenseId={editingExpenseId || undefined} // 传入消费记录 ID，或 undefined 表示添加模式
               />

@@ -1,12 +1,14 @@
 // src/components/TransactionForm.tsx
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateExpenseSchema, CreateExpenseInput, CategoryBasic } from '@/types';
 import { AmountInputType } from '@prisma/client';
 import { ExpenseWithCategory } from '@/app/dashboard/page';
+import CategoryFormModal from '@/components/categories/CategoryFormModal';
+import { CategoryData } from '@/app/api/categories/route';
 
 interface TransactionFormProps {
   categories: CategoryBasic[];
@@ -14,6 +16,7 @@ interface TransactionFormProps {
   onSuccess: (newExpense: ExpenseWithCategory) => void;
   defaultValues?: Partial<CreateExpenseInput>; // Props 传入的 defaultValues 可以是部分的
   expenseId?: number; // 如果需要编辑现有的消费，可以传入 expenseId
+  onCategoryAdded?: (newCategory: CategoryBasic) => void; // 新增回调来通知父组件
 }
 
 // 定义表单上下文类型（如果你的 resolver 使用它，通常是 any）
@@ -60,7 +63,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   onSuccess,
   defaultValues: propDefaultValues, // 重命名以避免混淆
   expenseId, // 如果需要编辑现有的消费，可以传入 expenseId
+  onCategoryAdded, // 新增的回调
 }) => {
+  // 添加状态来管理分类列表和分类模态框
+  const [currentCategories, setCurrentCategories] = useState<CategoryBasic[]>(categories);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -69,6 +77,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     formState: { errors, isSubmitting },
     reset,
     setError,
+    setValue, // 添加setValue来设置表单值
   } = useForm<CreateExpenseInput, MyFormContext>({ // useForm 第一个泛型是字段值类型
     // ****** 主要修改在这里 ******
     resolver: zodResolver<CreateExpenseInput, MyFormContext, CreateExpenseInput>(CreateExpenseSchema),
@@ -80,26 +89,54 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   // 在 JSX 中，通常 {isInstallment && ...} 这种用法，undefined 会被视为 false
   const isInstallment = watch('isInstallment');
 
+  // 处理新分类添加成功
+  const handleCategorySuccess = (newCategory: CategoryData) => {
+    // 将新分类添加到当前分类列表
+    const newCategoryBasic: CategoryBasic = {
+      id: newCategory.id,
+      name: newCategory.name,
+      color: newCategory.color,
+      parentId: newCategory.parentId ?? null
+    };
+    
+    setCurrentCategories(prev => [...prev, newCategoryBasic]);
+    
+    // 通知父组件更新分类列表（如果提供了回调）
+    if (onCategoryAdded) {
+      onCategoryAdded(newCategoryBasic);
+    }
+    
+    // 自动选中新添加的分类
+    setValue('categoryId', newCategory.id);
+    
+    // 关闭分类模态框
+    setIsCategoryModalOpen(false);
+  };
+
   const onSubmit: SubmitHandler<CreateExpenseInput> = async (data) => {
     // data.isNextMonthPayment 和 data.isInstallment 在这里将是 boolean | undefined
     // 如果你在API请求中需要它们是明确的 boolean，你可能需要在这里转换：
 
     const method = expenseId ? 'PUT' : 'POST'; // 如果有 expenseId，使用 PUT 更新，否则使用 POST 创建新消费
     const url = expenseId ? `/api/transactions/${expenseId}` : '/api/transactions';
+    
+    // 确保所有字段都符合API预期的类型
     const apiData = {
-      ...data,
+      amount: data.amount,
+      date: data.date,
+      categoryId: data.categoryId,
+      note: data.note || null, // 确保 note 是 string | null 而不是 undefined
       isNextMonthPayment: data.isNextMonthPayment ?? false,
       isInstallment: data.isInstallment ?? false,
+      installmentCount: data.installmentCount || null, // 确保是 number | null 而不是 undefined
       amountInputType: data.amountInputType ?? AmountInputType.TOTAL, // 确保枚举值
-      // 如果API期望 installmentCount 在非分期时不存在，而不是 undefined
-      // installmentCount: data.isInstallment ? data.installmentCount : undefined, (或者根据API调整)
     };
 
     try {
       const response = await fetch(url, {
         method: method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(apiData),
       });
 
       // ... (后续的响应处理逻辑不变)
@@ -136,7 +173,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     }
   };
 
-  // ... (getCategoryDisplayName 和 sortedCategories 逻辑不变)
+  // 改进的分类显示名称生成函数，包含颜色信息
   const getCategoryDisplayName = (cat: CategoryBasic, allCats: CategoryBasic[]): string => {
     if (cat.parentId) {
       const parent = allCats.find(p => p.id === cat.parentId);
@@ -145,16 +182,31 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     return cat.name;
   };
 
-  const sortedCategories = [...categories].sort((a,b) => {
-    const nameA = getCategoryDisplayName(a, categories).toLowerCase();
-    const nameB = getCategoryDisplayName(b, categories).toLowerCase();
-    if (nameA < nameB) return -1;
-    if (nameA > nameB) return 1;
-    return 0;
+  // 按层级排序分类，根分类在前，子分类按父级分组
+  const sortedCategories = [...currentCategories].sort((a, b) => {
+    // 首先按是否有父级排序（根分类在前）
+    if (!a.parentId && b.parentId) return -1;
+    if (a.parentId && !b.parentId) return 1;
+    
+    // 如果都是根分类或都是子分类，按名称排序
+    const nameA = getCategoryDisplayName(a, currentCategories).toLowerCase();
+    const nameB = getCategoryDisplayName(b, currentCategories).toLowerCase();
+    return nameA.localeCompare(nameB, 'ja'); // 使用日语排序规则
   });
 
+  // 将分类按父级分组，便于渲染
+  const categoriesByParent = sortedCategories.reduce((acc, cat) => {
+    const parentId = cat.parentId || 'root';
+    if (!acc[parentId]) {
+      acc[parentId] = [];
+    }
+    acc[parentId].push(cat);
+    return acc;
+  }, {} as Record<string, CategoryBasic[]>);
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4 bg-white rounded-lg shadow-md">
+    <>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4 bg-white rounded-lg shadow-md">
       {/* 表单的 JSX 部分基本不需要改变，因为 react-hook-form 会处理好 checkbox 的 undefined 值 */}
       {/* 金额 */}
       <div>
@@ -185,23 +237,82 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date.message}</p>}
       </div>
 
-      {/* 分类 */}
+      {/* 分类 - 改进的选择器 */}
       <div>
-        <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">
-          分类
-        </label>
+        <div className="flex items-center justify-between mb-2">
+          <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">
+            分类
+          </label>
+          <button
+            type="button"
+            onClick={() => setIsCategoryModalOpen(true)}
+            className="px-3 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            ＋ 添加新分类
+          </button>
+        </div>
         <select
           id="categoryId"
           {...register('categoryId')}
           className={`mt-1 block w-full px-3 py-2 border ${errors.categoryId ? 'border-red-500' : 'border-gray-300'} bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
         >
           <option value="">选择一个分类</option>
-          {sortedCategories.map((cat) => (
-            <option key={cat.id} value={cat.id} style={{ color: cat.color || 'inherit' }}>
-              {getCategoryDisplayName(cat, categories)}
+          
+          {/* 根分类 */}
+          {categoriesByParent.root?.map((cat) => (
+            <option 
+              key={`root-${cat.id}`} 
+              value={cat.id}
+              className="font-medium"
+            >
+              🏷️ {cat.name}
             </option>
           ))}
+          
+          {/* 子分类按父级分组 */}
+          {sortedCategories
+            .filter(cat => cat.parentId && categoriesByParent[cat.parentId])
+            .map((parent) => {
+              const children = categoriesByParent[parent.id] || [];
+              if (children.length === 0) return null;
+              
+              return (
+                <optgroup key={`group-${parent.id}`} label={`${parent.name} の子カテゴリ`}>
+                  {children.map((child) => (
+                    <option 
+                      key={`child-${child.id}`} 
+                      value={child.id}
+                      className="pl-4"
+                    >
+                      └─ {child.name}
+                    </option>
+                  ))}
+                </optgroup>
+              );
+            })}
         </select>
+        
+        {/* 显示选中分类的颜色指示器 */}
+        {watch('categoryId') && (
+          <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+            {(() => {
+              const selectedCat = currentCategories.find(cat => cat.id === Number(watch('categoryId')));
+              if (selectedCat) {
+                return (
+                  <>
+                    <div 
+                      className="w-4 h-4 rounded border border-gray-300"
+                      style={{ backgroundColor: selectedCat.color || '#888888' }}
+                    />
+                    <span>{getCategoryDisplayName(selectedCat, currentCategories)}</span>
+                  </>
+                );
+              }
+              return null;
+            })()}
+          </div>
+        )}
+        
         {errors.categoryId && <p className="mt-1 text-xs text-red-500">{errors.categoryId.message}</p>}
       </div>
 
@@ -312,7 +423,24 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
            {isSubmitting ? '保存中...' : (expenseId ? '更新消费' : '创建消费')}
         </button>
       </div>
-    </form>
+      </form>
+
+      {/* 分类表单模态框 */}
+      <CategoryFormModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        onSuccess={handleCategorySuccess}
+        allCategories={currentCategories.map(cat => ({
+          id: cat.id,
+          name: cat.name,
+          color: cat.color,
+          parentId: cat.parentId,
+          userId: 0, // 这个值在模态框中不会用到，只是为了类型匹配
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }))}
+      />
+    </>
   );
 };
 

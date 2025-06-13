@@ -28,9 +28,9 @@ import {
 interface CategoryFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void; // 当表单成功提交后调用
-  categoryToEdit?: CategoryData | null; // 用于编辑功能，目前先不完全实现
-  allCategories?: CategoryData[]; // 用于父级分类选择，暂时不实现
+  onSuccess: (newCategory: CategoryData) => void; // 修改 onSuccess 以接收新分类数据
+  categoryToEdit?: CategoryData | null;
+  allCategories?: CategoryData[];
 }
 
 export default function CategoryFormModal({
@@ -50,17 +50,22 @@ export default function CategoryFormModal({
 
   // 当 categoryToEdit 变化时 (例如，打开编辑模态框)，填充表单
   useEffect(() => {
-    if (isEditing && categoryToEdit) {
-      setName(categoryToEdit.name);
-      setColor(categoryToEdit.color);
-      setParentId(categoryToEdit.parentId !== null && categoryToEdit.parentId !== undefined ? String(categoryToEdit.parentId) : undefined);
-    } else {
-      // 如果是添加模式，重置表单
-      setName('');
-      setColor('#000000');
-      setParentId(undefined);
+    if (isOpen) {
+      if (isEditing && categoryToEdit) {
+        setName(categoryToEdit.name);
+        setColor(categoryToEdit.color);
+        setParentId(categoryToEdit.parentId !== null && categoryToEdit.parentId !== undefined ? String(categoryToEdit.parentId) : undefined);
+      } else {
+        // 如果是添加模式，重置表单
+        setName('');
+        setColor('#000000');
+        setParentId(undefined);
+      }
+      // 每次打开模态框时清除错误状态
+      setError(null);
+      setIsLoading(false);
     }
-  }, [isEditing, categoryToEdit, isOpen]); // isOpen 也作为依赖，确保每次打开都可能重置/填充
+  }, [isOpen, isEditing, categoryToEdit]); // 优化依赖数组，避免不必要的重渲染
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -68,17 +73,39 @@ export default function CategoryFormModal({
     setError(null);
 
     if (!name.trim()) {
-      setError('カテゴリ名は必須です。 (Category name is required.)');
+      setError('分类名称是必填项。');
+      setIsLoading(false);
+      return;
+    }
+    
+    // 检查分类名称重复（排除自身）
+    const isDuplicateName = allCategories.some(cat => 
+      cat.name.toLowerCase() === name.trim().toLowerCase() && 
+      (!isEditing || cat.id !== categoryToEdit?.id)
+    );
+    
+    if (isDuplicateName) {
+      setError('此名称的分类已存在。');
       setIsLoading(false);
       return;
     }
 
-    // 简单的颜色格式验证 (例如 #RRGGBB)
     if (!/^#[0-9A-F]{6}$/i.test(color)) {
-      setError('無効なカラーフォーマットです。#RRGGBB 形式で入力してください。 (Invalid color format. Use #RRGGBB.)');
+      setError('无效的颜色格式。请使用 #RRGGBB 格式。');
       setIsLoading(false);
       return;
     }
+
+    if (isEditing && parentId && categoryToEdit) {
+      const parentIdNum = Number(parentId);
+      if (parentIdNum === categoryToEdit.id) {
+        setError('分类不能将自身设置为父级分类。');
+        setIsLoading(false);
+        return;
+      }
+      // 更多循环依赖检查可以放在这里，如果需要的话
+    }
+
 
     const payload: { name: string; color: string; parentId?: number | null } = {
       name: name.trim(),
@@ -86,7 +113,7 @@ export default function CategoryFormModal({
     };
 
     if (parentId !== undefined && parentId !== '') {
-      payload.parentId = parentId === '' ? null : Number(parentId); // 如果选择了父分类，转换为数字
+      payload.parentId = parentId === '' ? null : Number(parentId);
     }
 
     const apiUrl = isEditing ? `/api/categories/${categoryToEdit?.id}` : '/api/categories';
@@ -103,15 +130,15 @@ export default function CategoryFormModal({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        throw new Error(errorData.message || `HTTP 错误! 状态: ${response.status}`);
       }
 
-      // const result: CategoryData = await response.json();
+      const result: CategoryData = await response.json(); // 获取新创建或更新的分类数据
       // console.log(isEditing ? 'Category updated:' : 'Category created:', result);
-      onSuccess(); // 通知父组件成功
-      handleClose(); // 关闭模态框
+      onSuccess(result); // 将新分类数据传递给 onSuccess 回调
+      handleClose(); 
     } catch (err: any) {
-      setError(err.message || (isEditing ? 'カテゴリの更新に失敗しました。' : 'カテゴリの作成に失敗しました。'));
+      setError(err.message || (isEditing ? '分类更新失败。' : '分类创建失败。'));
       console.error(isEditing ? 'Error updating category:' : 'Error creating category:', err);
     } finally {
       setIsLoading(false);
@@ -137,17 +164,17 @@ export default function CategoryFormModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'カテゴリを編集' : '新しいカテゴリを追加'}</DialogTitle>
+          <DialogTitle>{isEditing ? '编辑分类' : '添加新分类'}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? 'カテゴリの詳細を更新します。'
-              : '新しいカテゴリの名前と色を入力してください。'}
+              ? '更新分类的详细信息。'
+              : '请输入新分类的名称和颜色。'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-6 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name-modal" className="text-right">
-              名前 (Name)
+              名称
             </Label>
             <Input
               id="name"
@@ -160,7 +187,7 @@ export default function CategoryFormModal({
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="color-text-model" className="text-right">
-              色 (Color)
+              颜色
             </Label>
             <div className="col-span-3 flex items-center gap-2">
               <Input
@@ -170,7 +197,7 @@ export default function CategoryFormModal({
                 onChange={(e) => setColor(e.target.value.toUpperCase())} // 转为大写，符合 HEX 习惯
                 className="w-28"
                 pattern="^#[0-9A-F]{6}$" // HTML5 验证
-                title="カラーコードを #RRGGBB 形式で入力してください。"
+                title="请输入 #RRGGBB 格式的颜色代码。"
                 maxLength={7}
                 disabled={isLoading}
                 required
@@ -189,7 +216,7 @@ export default function CategoryFormModal({
           {
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="parent" className="text-right">
-                親カテゴリ (Parent)
+                父级分类
               </Label>
             <Select
               value={parentId} // string | undefined
@@ -197,11 +224,11 @@ export default function CategoryFormModal({
               disabled={isLoading}
             >
               <SelectTrigger id="parent-id-modal" className="col-span-3">
-                <SelectValue placeholder="親カテゴリを選択 (任意)" />
+                <SelectValue placeholder="选择父级分类 (可选)" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none"> {/* 代表没有父级，我们将其转为空字符串，再由 handleSubmit 转为 null */}
-                  <em>(なし - ルートカテゴリ)</em>
+                  <em>(无 - 根分类)</em>
                 </SelectItem>
                 {allCategories
                   .filter(cat => !categoryToEdit || cat.id !== categoryToEdit.id) // 编辑时不能选自己作为父级
@@ -220,11 +247,11 @@ export default function CategoryFormModal({
           <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
-                キャンセル (Cancel)
+                取消
               </Button>
             </DialogClose>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? (isEditing ? '更新中...' : '作成中...') : (isEditing ? '更新 (Update)' : '作成 (Create)')}
+              {isLoading ? (isEditing ? '更新中...' : '创建中...') : (isEditing ? '更新' : '创建')}
             </Button>
           </DialogFooter>
         </form>

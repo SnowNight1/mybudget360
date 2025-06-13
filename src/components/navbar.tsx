@@ -90,7 +90,7 @@ export default function Navbar() {
           ))}
           <div className="mt-2">
             {status === 'authenticated' && session?.user ? (
-              <Button variant="outline" onClick={() => signOut()} className="w-full">
+              <Button variant="outline" onClick={() => signOut({ callbackUrl: '/auth/login'})} className="w-full">
                 Logout
               </Button>
             ) : (

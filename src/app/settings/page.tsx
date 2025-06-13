@@ -17,7 +17,7 @@ export default async function SettingPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user.id) {
-    redirect('/login?callbackUrl=/settings');
+    redirect('/auth/login');
   }
 
   const userSettings = await getUserSettings(session.user.id);
