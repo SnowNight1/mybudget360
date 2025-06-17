@@ -265,7 +265,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               value={cat.id}
               className="font-medium"
             >
-              🏷️ {cat.name}
+              {cat.name}
             </option>
           ))}
           
@@ -277,14 +277,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               if (children.length === 0) return null;
               
               return (
-                <optgroup key={`group-${parent.id}`} label={`${parent.name} の子カテゴリ`}>
+                <optgroup key={`group-${parent.id}`} label={`${parent.name} 的子分类`}>
                   {children.map((child) => (
                     <option 
                       key={`child-${child.id}`} 
                       value={child.id}
                       className="pl-4"
                     >
-                      └─ {child.name}
+                      {child.name}
                     </option>
                   ))}
                 </optgroup>

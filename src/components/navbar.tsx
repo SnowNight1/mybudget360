@@ -12,10 +12,10 @@ import clsx from 'clsx';
 const navItems = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/records', label: 'Records' },
-  { href: '/charts', label: 'Charts' },
+  //{ href: '/charts', label: 'Charts' },
   { href: '/categories', label: 'Categories' },
   { href: '/budget', label: 'Budget' },
-  { href: '/accounts', label: 'Accounts' },
+  //{ href: '/accounts', label: 'Accounts' },
   { href: '/settings', label: 'Settings' },
 ];
 
@@ -29,7 +29,7 @@ export default function Navbar() {
       <div className="max-w-screen-xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/dashboard" className="text-xl font-bold">
-          MyBudget360
+          度支司
         </Link>
 
         {/* Desktop Nav */}

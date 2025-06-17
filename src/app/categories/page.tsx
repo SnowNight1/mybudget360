@@ -88,7 +88,7 @@ export default function CategoriesPage() {
   if (error) return <p className="text-center py-10 text-red-500">错误: {error}</p>;
 
   return (
-    <main className="container mx-auto p-4">
+    <main className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">カテゴリ管理</h1>
         <Button onClick={handleOpenAddModal}> {/* 使用新的处理函数名 */}

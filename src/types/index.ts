@@ -45,6 +45,58 @@ export type CreateExpenseInput = z.infer<typeof CreateExpenseSchema>;
 // CreateExpenseInput['isInstallment'] 的类型是 boolean | undefined
 // CreateExpenseInput['amountInputType'] 的类型是 AmountInputType | undefined
 
+// 订阅相关类型定义
+export const CreateSubscriptionSchema = z.object({
+  name: z.string().min(1, { message: "订阅名称不能为空" }).max(50, { message: "订阅名称不能超过50个字符" }),
+  description: z.string().max(200, { message: "描述不能超过200个字符" }).optional(),
+  amount: z.coerce.number().positive({ message: "金额必须为正数" }),
+  categoryId: z.coerce.number().int().positive({ message: "请选择一个分类" }),
+  billingDay: z.coerce.number().int().min(1).max(31, { message: "账单日必须在1-31之间" }),
+  startDate: z.coerce.date({
+    errorMap: (issue, { defaultError }) => ({
+      message: issue.code === "invalid_date" ? "请输入有效的开始日期" : defaultError,
+    }),
+  }),
+  endDate: z.coerce.date({
+    errorMap: (issue, { defaultError }) => ({
+      message: issue.code === "invalid_date" ? "请输入有效的结束日期" : defaultError,
+    }),
+  }).optional(),
+}).refine(data => {
+  // 如果设置了结束日期，确保它在开始日期之后
+  if (data.endDate && data.startDate >= data.endDate) {
+    return false;
+  }
+  return true;
+}, {
+  message: "结束日期必须晚于开始日期",
+  path: ["endDate"],
+});
+
+export type CreateSubscriptionInput = z.infer<typeof CreateSubscriptionSchema>;
+
+// 订阅基本信息类型（用于组件间传递）
+export type SubscriptionBasic = {
+  id: number;
+  name: string;
+  description?: string;
+  amount: number;
+  currency: string;
+  billingDay: number;
+  startDate: Date;
+  endDate?: Date;
+  isActive: boolean;
+  categoryId: number;
+  category?: {
+    id: number;
+    name: string;
+    color: string;
+  };
+};
+
+// 表单模式类型
+export type TransactionMode = 'expense' | 'subscription';
+
 // ... (CategoryBasic 类型保持不变)
 export type CategoryBasic = {
   id: number;

@@ -31,7 +31,7 @@ export default function BudgetPage() {
   const currentBudget = session.user?.monthlyBudget;
 
   return (
-    <main className="container mx-auto p-4 md:p-8">
+    <main className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">予算管理</h1>
         <p className="text-gray-600">在这里设置和调整您的每月预算。</p>
