@@ -15,6 +15,7 @@ const navItems = [
   //{ href: '/charts', label: 'Charts' },
   { href: '/categories', label: 'Categories' },
   { href: '/budget', label: 'Budget' },
+  { href: '/subscriptions', label: 'Subscriptions' },
   //{ href: '/accounts', label: 'Accounts' },
   { href: '/settings', label: 'Settings' },
 ];

@@ -242,6 +242,46 @@ export default function DashboardClientPage({
     }));
   },[availableMonthsForCharts,expenses]);
 
+  // 检查并生成订阅账单
+    useEffect(() => {
+      const checkSubscriptionBills = async () => {
+        try {
+          const response = await fetch('/api/subscriptions/check-bills', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.generatedCount > 0) {
+              console.log(`自动生成了 ${result.generatedCount} 个订阅账单`);
+              // 刷新支出列表以包含新生成的账单
+              await refreshExpenses();
+            }
+          }
+        } catch (error) {
+          console.error('检查订阅账单失败:', error);
+        }
+      };
+
+      checkSubscriptionBills();
+    }, []); // 只在组件挂载时执行一次
+
+    // 刷新支出列表的函数
+    const refreshExpenses = async () => {
+      try {
+        const response = await fetch('/api/transactions');
+        if (response.ok) {
+          const data = await response.json();
+          setExpenses(data.expenses || []);
+        }
+      } catch (error) {
+        console.error('刷新支出列表失败:', error);
+      }
+    };
+
   return (
     <div className="min-h-screen bg-gray-100">
       <main className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">

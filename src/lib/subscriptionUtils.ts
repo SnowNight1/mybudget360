@@ -86,7 +86,7 @@ export async function checkAndGenerateSubscriptionBills(userId: string): Promise
           const newExpense = await prisma.expense.create({
             data: {
               amount: subscription.amount,
-              description: `${subscription.name}${subscription.description ? ` - ${subscription.description}` : ''}`,
+              note: `${subscription.name}${subscription.description ? ` - ${subscription.description}` : ''}`,
               date: today,
               categoryId: subscription.categoryId,
               userId: subscription.userId,
@@ -196,7 +196,7 @@ export async function generateMissedSubscriptionBills(
           const newExpense = await prisma.expense.create({
             data: {
               amount: subscription.amount,
-              description: `${subscription.name}${subscription.description ? ` - ${subscription.description}` : ''}`,
+              note: `${subscription.name}${subscription.description ? ` - ${subscription.description}` : ''}`,
               date: billDate,
               categoryId: subscription.categoryId,
               userId: subscription.userId,
