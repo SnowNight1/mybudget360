@@ -6,9 +6,9 @@ import { prisma } from '@/lib/prisma';
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: { id: string } }
+  segmentData: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context;
+  const params = await segmentData.params;
   try {
     const session = await getServerSession(authOptions);
 
@@ -62,9 +62,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  segmentData: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context;
+  const params = await segmentData.params;
   try {
     const session = await getServerSession(authOptions);
 

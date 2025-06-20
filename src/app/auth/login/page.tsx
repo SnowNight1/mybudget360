@@ -1,12 +1,12 @@
 //src/app/auth/login/page.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const {  data : session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,5 +56,13 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">加载中...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
