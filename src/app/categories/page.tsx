@@ -16,7 +16,7 @@ export default function CategoriesPage() {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingCategory, setEditingCategory] = useState<CategoryData | null>(null); // 统一状态名
 
-  const fetchCategories = async () => { // 修正拼写
+  const fetchCategories = async () => { 
     setLoading(true);
     setError(null);
     try {

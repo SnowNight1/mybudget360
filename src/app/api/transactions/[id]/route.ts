@@ -5,13 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { CreateExpenseSchema } from "@/types";
 import { AmountInputType, Prisma } from "@prisma/client";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(request: Request, { params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user || !session.user.id) {
         return NextResponse.json({ message: '未授权或 Session 配置不完整' }, { status: 401 });
@@ -46,7 +40,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 }
 
 // PUT (Update) an expense by ID
-export async function PUT(request: Request, { params }: RouteParams) {
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   // 确保 session, user, id, currency 都存在
   if (!session || !session.user || !session.user.id || !session.user.currency) {
@@ -154,7 +148,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 }
 
 // DELETE an expense (可以顺便加上删除功能)
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user || !session.user.id) {
       return NextResponse.json({ message: '未授权' }, { status: 401 });

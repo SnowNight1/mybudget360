@@ -5,13 +5,6 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
-// 正确的参数类型定义
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 // 验证更新分类数据的 schema
 const updateCategorySchema = z.object({
   name: z.string().min(1, '分类名称不能为空').optional(),
@@ -26,7 +19,7 @@ const updateCategorySchema = z.object({
 // GET 请求 - 获取单个分类
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -97,7 +90,7 @@ export async function GET(
 // PUT 请求 - 更新分类
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -231,7 +224,7 @@ export async function PUT(
 // DELETE 请求 - 删除分类
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
