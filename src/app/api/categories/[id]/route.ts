@@ -19,8 +19,9 @@ const updateCategorySchema = z.object({
 // GET 请求 - 获取单个分类
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context;
   try {
     const session = await getServerSession(authOptions);
     
@@ -90,8 +91,9 @@ export async function GET(
 // PUT 请求 - 更新分类
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context;
   try {
     const session = await getServerSession(authOptions);
     
@@ -224,8 +226,9 @@ export async function PUT(
 // DELETE 请求 - 删除分类
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context;
   try {
     const session = await getServerSession(authOptions);
     
