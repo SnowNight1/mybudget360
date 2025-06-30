@@ -12,7 +12,8 @@ import {
 } from 'chart.js';
 import {  CategoryBasic } from '@/types'; // Adjust path as needed
 import { group } from 'console';
-import { ExpenseWithCategory } from '@/app/dashboard/page'; // Adjust path as needed
+import { ExpenseWithCategory } from '@/app/[locale]/dashboard/page'; // Adjust path as needed
+import { useTranslations } from 'next-intl';
 
 ChartJS.register(
   ArcElement,
@@ -44,6 +45,8 @@ const CategoryPieChart: React.FC<CategoryPieChartProps> = ({
   categories,
   userCurrency,
 }) => {
+  const t = useTranslations('charts');
+  
   const [year, month] = selectedMonth.split('-').map(Number);
 
   // 1. Filter expenses for the selected month
@@ -74,7 +77,7 @@ const CategoryPieChart: React.FC<CategoryPieChartProps> = ({
       targetCategoryIdKey = topLevelParent.id;
       targetCategoryName = topLevelParent.name;
       targetCategoryColor = topLevelParent.color || getRandomColor();
-      chartTitle += ' - 按一级分类支出';
+      chartTitle += ` - ${t('topLevelCategories')}`;
     } else {
       // Aggregate by sub-categories of the selectedParentCategoryId
       // Only include direct children or the parent itself if it has no children being used
@@ -88,7 +91,7 @@ const CategoryPieChart: React.FC<CategoryPieChartProps> = ({
         return; // This expense is not a direct sub-category of the selected parent
       }
       const parentCatName = categories.find(c => c.id === selectedParentCategoryId)?.name;
-      chartTitle += ` - ${parentCatName || '选定分类'} 下属分类支出`;
+      chartTitle += ` - ${parentCatName || t('selectedCategory')} ${t('subcategorySpending')}`;
     }
 
     if (typeof targetCategoryIdKey === 'string' && selectedParentCategoryId !== 'all') return; // Skip if not matching sub-category criteria

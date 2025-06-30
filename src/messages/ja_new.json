@@ -1,0 +1,220 @@
+{
+  "common": {
+    "cancel": "キャンセル",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "add": "追加",
+    "submit": "送信",
+    "loading": "読み込み中...",
+    "saving": "保存中...",
+    "submitting": "送信中...",
+    "active": "アクティブ",
+    "inactive": "非アクティブ",
+    "activate": "有効化",
+    "deactivate": "無効化",
+    "required": "必須",
+    "optional": "任意"
+  },
+  "navigation": {
+    "dashboard": "ダッシュボード",
+    "budget": "予算管理",
+    "records": "支出記録",
+    "subscriptions": "サブスクリプション",
+    "settings": "設定",
+    "categories": "カテゴリ",
+    "charts": "チャート",
+    "accounts": "アカウント",
+    "add": "記録追加"
+  },
+  "auth": {
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "pleaseLogin": "予算管理にはログインしてください。",
+    "loginToAccess": "このページにアクセスするにはログインしてください。",
+    "welcomeBack": "おかえりなさい",
+    "loginWithGoogle": "Googleでログイン",
+    "loginDescription": "Googleアカウントでログインして、支出記録と設定にアクセスしてください。",
+    "noAccountText": "Googleアカウントをお持ちでない場合は、",
+    "signUpLink": "こちらで登録してください"
+  },
+  "budget": {
+    "title": "予算管理",
+    "description": "ここで月次予算を設定・調整します。",
+    "currentBudget": "現在の月次予算",
+    "noBudgetSet": "まだ月次予算を設定していません。",
+    "setBudget": "予算を設定",
+    "editBudget": "予算を編集",
+    "budgetModal": {
+      "setTitle": "月次予算を設定",
+      "editTitle": "月次予算を編集",
+      "amount": "予算金額",
+      "placeholder": "例: 50000（空欄でクリア）",
+      "clearHint": "空欄にすると予算設定をクリアします"
+    }
+  },
+  "transactions": {
+    "addExpense": "支出を追加",
+    "createSubscription": "サブスクリプションを作成",
+    "amount": "金額",
+    "category": "カテゴリ",
+    "date": "日付",
+    "note": "メモ",
+    "selectCategory": "カテゴリを選択してください",
+    "addNote": "メモを追加...",
+    "nextMonthPayment": "来月支払い",
+    "installment": "分割払い",
+    "installmentCount": "分割回数",
+    "amountType": "金額タイプ",
+    "totalAmount": "総額",
+    "perInstallmentAmount": "毎回の金額",
+    "createNewCategory": "+ 新規カテゴリ"
+  },
+  "subscriptions": {
+    "title": "サブスクリプション管理",
+    "name": "サブスクリプション名",
+    "description": "説明",
+    "monthlyAmount": "月額",
+    "billingDay": "毎月の請求日",
+    "startDate": "開始日",
+    "endDate": "終了日",
+    "endDateOptional": "終了日（任意）",
+    "endDateHint": "空欄で継続的なサブスクリプション",
+    "namePlaceholder": "例: Netflix Premium",
+    "descriptionPlaceholder": "サブスクリプションサービスの詳細説明",
+    "billingDayFormat": "毎月{day}日",
+    "description_page": "サブスクリプションサービスと自動請求を管理",
+    "createSubscription": "+ 新規サブスクリプション",
+    "activeSubscriptions": "アクティブなサブスクリプション",
+    "totalSubscriptions": "総サブスクリプション数",
+    "monthlyTotal": "月額合計",
+    "subscriptionList": "サブスクリプション一覧",
+    "noSubscriptions": "まだサブスクリプションがありません",
+    "noSubscriptionsDescription": "最初のサブスクリプションを作成して、請求の自動管理を開始しましょう",
+    "createFirst": "サブスクリプションを作成",
+    "activate": "有効化",
+    "deactivate": "無効化",
+    "deleteConfirm": "このサブスクリプションを削除してもよろしいですか？既に生成された請求には影響しません。",
+    "updateStatusFailed": "サブスクリプションステータスの更新に失敗しました",
+    "deleteFailed": "サブスクリプションの削除に失敗しました",
+    "status": {
+      "active": "アクティブ",
+      "inactive": "非アクティブ"
+    },
+    "info": {
+      "monthlyAmount": "💰 {amount}/月",
+      "billingDay": "📅 毎月{day}日",
+      "category": "🏷️ {category}",
+      "startDate": "📆 {date} 開始",
+      "endDate": "🔚 {date} 終了"
+    }
+  },
+  "categories": {
+    "title": "カテゴリ管理",
+    "addCategory": "新しいカテゴリを追加",
+    "noCategories": "カテゴリが見つかりませんでした",
+    "loading": "カテゴリを読み込み中...",
+    "loadingError": "エラー",
+    "fetchError": "カテゴリの取得に失敗しました",
+    "deleteConfirm": "このカテゴリを本当に削除してもよろしいですか？この操作は元に戻せません。",
+    "deleteSuccess": "カテゴリが正常に削除されました",
+    "deleteFailed": "カテゴリの削除に失敗しました",
+    "edit": "編集",
+    "delete": "削除",
+    "updating": "更新中...",
+    "parentId": "親ID"
+  },
+  "records": {
+    "title": "支出記録",
+    "noRecords": "支出記録がありません",
+    "addRecord": "記録を追加",
+    "startFirstRecord": "最初の支出を記録しましょう",
+    "noNote": "メモなし",
+    "uncategorized": "未分類"
+  },
+  "settings": {
+    "title": "ユーザー設定",
+    "defaultRedirect": "ログイン後のデフォルトリダイレクトページ",
+    "defaultRedirectDescription": "アプリケーションを開いた後に最初に表示したいページを選択してください",
+    "savePreferences": "設定を保存",
+    "saveSuccess": "設定が正常に保存されました！",
+    "saveError": "保存に失敗しました。もう一度お試しください。",
+    "networkError": "ネットワークエラーが発生しました。しばらくしてからもう一度お試しください。"
+  },
+  "charts": {
+    "monthlySpending": "月別支出トレンド",
+    "categoryDistribution": "カテゴリ別支出分布",
+    "month": "月",
+    "totalAmount": "総額",
+    "topLevelCategories": "トップレベルカテゴリ別支出",
+    "selectedCategory": "選択されたカテゴリ",
+    "subcategorySpending": "サブカテゴリ支出"
+  },
+  "forms": {
+    "validation": {
+      "required": "この項目は必須です",
+      "positiveNumber": "金額は正の数である必要があります",
+      "selectCategory": "カテゴリを選択してください",
+      "nameRequired": "サブスクリプション名を入力してください",
+      "nameMaxLength": "サブスクリプション名は50文字以内で入力してください",
+      "descriptionMaxLength": "説明は200文字以内で入力してください",
+      "billingDayRange": "請求日は1〜31の間で指定してください",
+      "validStartDate": "有効な開始日を入力してください",
+      "validEndDate": "有効な終了日を入力してください",
+      "endDateAfterStart": "終了日は開始日より後の日付である必要があります",
+      "installmentSettings": "分割払い設定が正しくありません：分割払いを選択した場合、分割回数は2回以上である必要があります；毎回の金額を入力した場合、分割払いを選択する必要があります。"
+    }
+  },
+  "dashboard": {
+    "welcome": "おかえりなさい、{userName}さん！",
+    "defaultCurrency": "デフォルト通貨：{currency}",
+    "addExpense": "支出を追加",
+    "budgetOverview": "予算概要",
+    "monthlyBudget": "月次予算",
+    "monthlySpent": "月次支出",
+    "remainingBudget": "残り予算",
+    "noBudgetSet": "まだ月次予算を設定していません。",
+    "spendingAnalysis": "支出分析",
+    "selectChartMonth": "チャート月を選択（時間範囲の終了月として使用されます）",
+    "monthlySpendingTrend": "月別支出トレンド",
+    "allCategories": "すべてのカテゴリ",
+    "last3Months": "過去3ヶ月",
+    "last6Months": "過去6ヶ月",
+    "last12Months": "過去12ヶ月",
+    "last24Months": "過去24ヶ月",
+    "categorySpendingDistribution": "今月のカテゴリ別支出分布",
+    "recentTransactions": "最近の取引",
+    "tableHeaders": {
+      "date": "日付",
+      "category": "カテゴリ",
+      "note": "メモ",
+      "amount": "金額",
+      "actions": "操作"
+    },
+    "noTransactions": "取引がありません",
+    "noDataForCharts": "支出データがないため、分析チャートを生成できません。",
+    "selectMonthForCharts": "チャート分析を表示する月を選択してください。",
+    "modal": {
+      "addTransaction": "新しい支出を追加",
+      "close": "×"
+    },
+    "messages": {
+      "deleteConfirm": "この支出記録（{description}）を削除してもよろしいですか？この操作は元に戻せません。",
+      "deleteSuccess": "支出記録が正常に削除されました",
+      "deleteFailed": "削除に失敗しました。しばらくしてからもう一度お試しください。サーバーから有効なエラー情報が返されませんでした",
+      "expenseUpdated": "支出「{description}」が更新されました！",
+      "expenseAdded": "支出「{description}」が追加されました！",
+      "subscriptionBillsGenerated": "{count}個のサブスクリプション請求が自動生成されました",
+      "refreshFailed": "支出リストの更新に失敗しました",
+      "checkBillsFailed": "サブスクリプション請求の確認に失敗しました",
+      "networkError": "支出記録削除時にネットワークエラーが発生しました。接続を確認してください",
+      "deleteServerError": "削除に失敗しました：{message}"
+    }
+  },
+  "language": {
+    "select": "言語を選択",
+    "chinese": "中文",
+    "english": "English",
+    "japanese": "日本語"
+  }
+}

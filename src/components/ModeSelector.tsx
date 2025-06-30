@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { TransactionMode } from '@/types/subscription';
+import { useTransactionTranslations } from '@/hooks/useTranslations';
 
 interface ModeSelectorProps {
   mode: TransactionMode;
@@ -10,6 +11,8 @@ interface ModeSelectorProps {
 }
 
 export default function ModeSelector({ mode, onChange }: ModeSelectorProps) {
+  const t = useTransactionTranslations();
+  
   return (
     <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
       <button
@@ -22,7 +25,7 @@ export default function ModeSelector({ mode, onChange }: ModeSelectorProps) {
         }`}
       >
         <span className="text-lg">💰</span>
-        普通支出
+        {t('addExpense')}
       </button>
       <button
         type="button"
@@ -34,7 +37,7 @@ export default function ModeSelector({ mode, onChange }: ModeSelectorProps) {
         }`}
       >
         <span className="text-lg">🔄</span>
-        订阅支出
+        {t('createSubscription')}
       </button>
     </div>
   );

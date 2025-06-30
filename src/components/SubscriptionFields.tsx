@@ -4,6 +4,7 @@
 import React from 'react';
 import { UseFormRegister, FieldErrors } from 'react-hook-form';
 import { SubscriptionFormData } from '@/types/subscription';
+import { useTranslations } from 'next-intl';
 
 interface SubscriptionFieldsProps {
   register: UseFormRegister<SubscriptionFormData>;
@@ -11,6 +12,9 @@ interface SubscriptionFieldsProps {
 }
 
 export default function SubscriptionFields({ register, errors }: SubscriptionFieldsProps) {
+  const t = useTranslations('subscriptions');
+  const tCommon = useTranslations('common');
+  
   // 生成账单日选项 (1-31)
   const billingDayOptions = Array.from({ length: 31 }, (_, i) => i + 1);
   
@@ -19,16 +23,16 @@ export default function SubscriptionFields({ register, errors }: SubscriptionFie
       {/* 订阅名称 */}
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-          订阅名称 <span className="text-red-500">*</span>
+          {t('name')} <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           id="name"
-          placeholder="如: Netflix Premium"
+          placeholder={t('namePlaceholder')}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           {...register('name', { 
-            required: '请输入订阅名称',
-            minLength: { value: 1, message: '订阅名称不能为空' }
+            required: t('name') + ' ' + tCommon('required'),
+            minLength: { value: 1, message: t('name') + ' ' + tCommon('required') }
           })}
         />
         {errors.name && (
@@ -39,12 +43,12 @@ export default function SubscriptionFields({ register, errors }: SubscriptionFie
       {/* 描述（可选） */}
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-          描述（可选）
+          {t('description')}（{tCommon('optional')}）
         </label>
         <input
           type="text"
           id="description"
-          placeholder="订阅服务的详细描述"
+          placeholder={t('descriptionPlaceholder')}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           {...register('description')}
         />
@@ -53,19 +57,19 @@ export default function SubscriptionFields({ register, errors }: SubscriptionFie
       {/* 每月账单日 */}
       <div>
         <label htmlFor="billingDay" className="block text-sm font-medium text-gray-700 mb-2">
-          每月账单日 <span className="text-red-500">*</span>
+          {t('billingDay')} <span className="text-red-500">*</span>
         </label>
         <select
           id="billingDay"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           {...register('billingDay', { 
-            required: '请选择账单日',
+            required: t('billingDay') + ' ' + tCommon('required'),
             valueAsNumber: true 
           })}
         >
           {billingDayOptions.map(day => (
             <option key={day} value={day}>
-              每月 {day} 号
+              {t('billingDayFormat', { day })}
             </option>
           ))}
         </select>
@@ -77,14 +81,14 @@ export default function SubscriptionFields({ register, errors }: SubscriptionFie
       {/* 开始日期 */}
       <div>
         <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
-          开始日期 <span className="text-red-500">*</span>
+          {t('startDate')} <span className="text-red-500">*</span>
         </label>
         <input
           type="date"
           id="startDate"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           {...register('startDate', { 
-            required: '请选择开始日期' 
+            required: t('startDate') + ' ' + tCommon('required')
           })}
         />
         {errors.startDate && (
@@ -95,7 +99,7 @@ export default function SubscriptionFields({ register, errors }: SubscriptionFie
       {/* 结束日期（可选） */}
       <div>
         <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
-          结束日期（可选）
+          {t('endDateOptional')}
         </label>
         <input
           type="date"
@@ -104,7 +108,7 @@ export default function SubscriptionFields({ register, errors }: SubscriptionFie
           {...register('endDate')}
         />
         <p className="mt-1 text-xs text-gray-500">
-          不填写表示长期订阅
+          {t('endDateHint')}
         </p>
       </div>
     </div>

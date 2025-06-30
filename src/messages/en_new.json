@@ -1,0 +1,202 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "submit": "Submit",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "submitting": "Submitting...",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "required": "Required",
+    "optional": "Optional"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "budget": "Budget Management",
+    "records": "Expense Records",
+    "subscriptions": "Subscriptions",
+    "settings": "Settings",
+    "categories": "Categories",
+    "charts": "Charts",
+    "accounts": "Accounts",
+    "add": "Add Record"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "pleaseLogin": "Please login to manage your budget.",
+    "loginToAccess": "Please login to access this page.",
+    "welcomeBack": "Welcome Back",
+    "loginWithGoogle": "Login with Google",
+    "loginDescription": "Login with Google to access your expense records and settings.",
+    "noAccountText": "If you don't have a Google account, you can",
+    "signUpLink": "sign up for one"
+  },
+  "budget": {
+    "title": "Budget Management",
+    "description": "Set and adjust your monthly budget here.",
+    "currentBudget": "Current Monthly Budget",
+    "noBudgetSet": "You haven't set a monthly budget yet.",
+    "setBudget": "Set Budget",
+    "editBudget": "Edit Budget",
+    "budgetModal": {
+      "setTitle": "Set Monthly Budget",
+      "editTitle": "Edit Monthly Budget",
+      "amount": "Budget Amount",
+      "placeholder": "e.g: 50000 (leave empty to clear)",
+      "clearHint": "Leave empty to clear budget setting"
+    }
+  },
+  "transactions": {
+    "addExpense": "Add Expense",
+    "createSubscription": "Create Subscription",
+    "amount": "Amount",
+    "category": "Category",
+    "date": "Date",
+    "note": "Note",
+    "selectCategory": "Please select category",
+    "addNote": "Add note...",
+    "nextMonthPayment": "Next month payment",
+    "installment": "Installment",
+    "installmentCount": "Number of installments",
+    "amountType": "Amount type",
+    "totalAmount": "Total amount",
+    "perInstallmentAmount": "Per installment amount",
+    "createNewCategory": "+ New Category"
+  },
+  "subscriptions": {
+    "title": "Subscription Management",
+    "name": "Subscription Name",
+    "description": "Description",
+    "monthlyAmount": "Monthly Amount",
+    "billingDay": "Monthly billing day",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "endDateOptional": "End Date (Optional)",
+    "endDateHint": "Leave empty for ongoing subscription",
+    "namePlaceholder": "e.g: Netflix Premium",
+    "descriptionPlaceholder": "Detailed description of the subscription service",
+    "billingDayFormat": "{day}th of each month",
+    "description_page": "Manage your subscription services and automatic billing",
+    "createSubscription": "+ New Subscription",
+    "activeSubscriptions": "Active Subscriptions",
+    "totalSubscriptions": "Total Subscriptions",
+    "monthlyTotal": "Monthly Total",
+    "subscriptionList": "Subscription List",
+    "noSubscriptions": "No subscriptions yet",
+    "noSubscriptionsDescription": "Create your first subscription to start managing bills automatically",
+    "createFirst": "Create Subscription",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "deleteConfirm": "Are you sure you want to delete this subscription? This won't affect already generated bills.",
+    "updateStatusFailed": "Failed to update subscription status",
+    "deleteFailed": "Failed to delete subscription",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "info": {
+      "monthlyAmount": "💰 {amount}/month",
+      "billingDay": "📅 {day}th every month",
+      "category": "🏷️ {category}",
+      "startDate": "📆 Started {date}",
+      "endDate": "🔚 Ends {date}"
+    }
+  },
+  "records": {
+    "title": "Expense Records",
+    "noRecords": "No expense records yet",
+    "addRecord": "Add Record",
+    "startFirstRecord": "Start recording your first expense",
+    "noNote": "No note",
+    "uncategorized": "Uncategorized"
+  },
+  "settings": {
+    "title": "User Settings",
+    "defaultRedirect": "Default redirect page after login",
+    "defaultRedirectDescription": "Choose the page you want to see first after opening the application",
+    "savePreferences": "Save Preferences",
+    "saveSuccess": "Settings saved successfully!",
+    "saveError": "Save failed, please try again.",
+    "networkError": "Network error occurred, please try again later."
+  },
+  "charts": {
+    "monthlySpending": "Monthly Spending Trend",
+    "categoryDistribution": "Category Spending Distribution",
+    "month": "Month",
+    "totalAmount": "Total Amount"
+  },
+  "forms": {
+    "validation": {
+      "required": "This field is required",
+      "positiveNumber": "Amount must be positive",
+      "selectCategory": "Please select a category",
+      "nameRequired": "Subscription name cannot be empty",
+      "nameMaxLength": "Subscription name cannot exceed 50 characters",
+      "descriptionMaxLength": "Description cannot exceed 200 characters",
+      "billingDayRange": "Billing day must be between 1-31",
+      "validStartDate": "Please enter a valid start date",
+      "validEndDate": "Please enter a valid end date",
+      "endDateAfterStart": "End date must be later than start date",
+      "installmentSettings": "Installment settings are incorrect: If installment is selected, the number of installments must be at least 2; If amount per installment is entered, installment must be selected."
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome back, {userName}!",
+    "defaultCurrency": "Your default currency is: {currency}",
+    "addExpense": "Add Expense",
+    "budgetOverview": "Budget Overview",
+    "monthlyBudget": "Monthly Budget",
+    "monthlySpent": "Monthly Spent",
+    "remainingBudget": "Remaining Budget",
+    "noBudgetSet": "You haven't set a monthly budget yet.",
+    "spendingAnalysis": "Spending Analysis",
+    "selectChartMonth": "Select chart month (will be used as the end month of the time range)",
+    "monthlySpendingTrend": "Monthly Spending Trend",
+    "allCategories": "All Categories",
+    "last3Months": "Last 3 Months",
+    "last6Months": "Last 6 Months",
+    "last12Months": "Last 12 Months",
+    "last24Months": "Last 24 Months",
+    "categorySpendingDistribution": "Category Spending Distribution for This Month",
+    "recentTransactions": "Recent Transactions",
+    "tableHeaders": {
+      "date": "Date",
+      "category": "Category",
+      "note": "Note",
+      "amount": "Amount",
+      "actions": "Actions"
+    },
+    "noTransactions": "No transactions yet",
+    "noDataForCharts": "No expense data available, unable to generate analysis charts.",
+    "selectMonthForCharts": "Please select a month to view chart analysis.",
+    "modal": {
+      "addTransaction": "Add New Expense",
+      "close": "×"
+    },
+    "messages": {
+      "deleteConfirm": "Are you sure you want to delete this expense record ({description})? This action cannot be undone.",
+      "deleteSuccess": "Expense record has been successfully deleted",
+      "deleteFailed": "Delete failed, please try again later, server did not return valid error information",
+      "expenseUpdated": "Expense \"{description}\" has been updated!",
+      "expenseAdded": "Expense \"{description}\" has been added!",
+      "subscriptionBillsGenerated": "Automatically generated {count} subscription bills",
+      "refreshFailed": "Failed to refresh expense list",
+      "checkBillsFailed": "Failed to check subscription bills",
+      "networkError": "Network error occurred while deleting expense record, please check your connection",
+      "deleteServerError": "Delete failed: {message}"
+    }
+  },
+  "language": {
+    "select": "Select Language",
+    "chinese": "中文",
+    "english": "English",
+    "japanese": "日本語"
+  }
+}

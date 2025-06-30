@@ -6,6 +6,7 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useSession } from 'next-auth/react';
+import { useBudgetTranslations, useCommonTranslations, useFormTranslations } from '@/hooks/useTranslations';
 
 // Zod schema now directly reflects the final data structure (number | null)
 // We will use coerce for transformation from string input
@@ -31,6 +32,9 @@ interface BudgetFormProps {
 const BudgetForm: React.FC<BudgetFormProps> = ({ currentBudget, onClose, onSuccess }) => {
   const { data: session, update } = useSession();
   const [apiError, setApiError] = useState<string | null>(null);
+  const t = useBudgetTranslations();
+  const common = useCommonTranslations();
+  const form = useFormTranslations();
 
   const {
     register,
@@ -58,7 +62,7 @@ const BudgetForm: React.FC<BudgetFormProps> = ({ currentBudget, onClose, onSucce
       const responseData = await response.json();
 
       if (!response.ok) {
-        setApiError(responseData.message || '更新预算失败');
+        setApiError(responseData.message || form('updateBudgetFailed'));
         return;
       }
 
@@ -66,8 +70,8 @@ const BudgetForm: React.FC<BudgetFormProps> = ({ currentBudget, onClose, onSucce
       onSuccess(data.monthlyBudget ?? null);
 
     } catch (error) {
-      console.error('更新预算表单提交失败:', error);
-      setApiError('网络错误，请稍后再试。');
+      console.error('Budget form submission failed:', error);
+      setApiError(form('validation.networkError'));
     }
   };
 
@@ -75,13 +79,13 @@ const BudgetForm: React.FC<BudgetFormProps> = ({ currentBudget, onClose, onSucce
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
       <div>
         <label htmlFor="monthlyBudget" className="block text-sm font-medium text-gray-700">
-          月度预算 ({session?.user?.currency || 'N/A'})
+          {t('budgetModal.amount')} ({session?.user?.currency || 'N/A'})
         </label>
         <input
           id="monthlyBudget"
           type="number" // Can use number again, Zod will coerce
           step="any"   // Allow decimals if needed, or remove for integers
-          placeholder="例如: 50000 (留空则清除)"
+          placeholder={t('budgetModal.placeholder')}
           // For react-hook-form with Zod coercion, register directly.
           // The value will be string from input, Zod handles conversion.
           {...register('monthlyBudget')}
@@ -91,6 +95,7 @@ const BudgetForm: React.FC<BudgetFormProps> = ({ currentBudget, onClose, onSucce
         {errors.monthlyBudget && (
           <p className="mt-1 text-xs text-red-500">{errors.monthlyBudget.message}</p>
         )}
+        <p className="mt-1 text-xs text-gray-500">{t('budgetModal.clearHint')}</p>
       </div>
 
       {apiError && <p className="text-sm text-red-600">{apiError}</p>}
@@ -102,14 +107,14 @@ const BudgetForm: React.FC<BudgetFormProps> = ({ currentBudget, onClose, onSucce
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
         >
-          取消
+          {common('cancel')}
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 disabled:opacity-50"
         >
-          {isSubmitting ? '保存中...' : '保存预算'}
+          {isSubmitting ? common('saving') : common('save')}
         </button>
       </div>
     </form>

@@ -1,16 +1,18 @@
 import './globals.css';
-import { Providers } from '@/components/providers';
 import type { ReactNode } from 'react';
-import Navbar from '@/components/navbar';
+import type { Metadata } from 'next';
 
+export const metadata: Metadata = {
+  title: 'MyBudget360',
+  description: 'Personal budget management application',
+};
+
+// 根布局，提供基本的 HTML 结构
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className='min-h-screen bg-gray-50 text-gray-900'>
-        <Providers>
-          <Navbar />
-          <main className='p-6'>{children}</main>
-          </Providers>
+    <html lang="zh" suppressHydrationWarning>
+      <body className='min-h-screen bg-gray-50 text-gray-900' suppressHydrationWarning>
+        {children}
       </body>
     </html>
   );

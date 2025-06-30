@@ -15,9 +15,10 @@ import {
   Filler,  // 填充
 } from 'chart.js';
 import { CategoryBasic } from '@/types'; // 根据需要调整路径
-import { ExpenseWithCategory } from '@/app/dashboard/page'; // 根据需要调整路径
+import { ExpenseWithCategory } from '@/app/[locale]/dashboard/page'; // 根据需要调整路径
 import { subMonths, addMonths, format, getYear, getMonth, parseISO, startOfMonth, isWithinInterval, isEqual } from 'date-fns';
 import { zhCN } from 'date-fns/locale'; // 用于中文月份标签
+import { useTranslations } from 'next-intl';
 
 ChartJS.register(
   CategoryScale,
@@ -47,22 +48,23 @@ const MonthlySpendingLineChart: React.FC<MonthlySpendingLineChartProps> = ({
   userCurrency,
   numberOfMonthsToShow = 12, // 默认显示12个月
 }) => {
-  // 1. 确定图表的日期范围
-  // selectedMonth 是我们周期的结束点。
-  // 确保 selectedMonth 是一个有效的日期字符串以便解析 (例如, "YYYY-MM-01")
-  const endMonthDate = startOfMonth(parseISO(`${selectedMonth}-01T00:00:00Z`)); // 使用 ISO 格式和 Z 表示 UTC，以避免仅传递 YYYY-MM 时 parseISO 产生的时区问题
+  const t = useTranslations('dashboard');
+  // 1. Determine the date range for the chart
+  // selectedMonth is the end point of our period.
+  // Ensure selectedMonth is a valid date string for parsing (e.g., "YYYY-MM-01")
+  const endMonthDate = startOfMonth(parseISO(`${selectedMonth}-01T00:00:00Z`)); // Use ISO format with Z for UTC to avoid timezone issues when only passing YYYY-MM to parseISO
   const startMonthDate = startOfMonth(subMonths(endMonthDate, numberOfMonthsToShow - 1));
 
   const chartPeriodLabel = `${format(startMonthDate, 'yyyy年M月', { locale: zhCN })} - ${format(endMonthDate, 'yyyy年M月', { locale: zhCN })}`;
 
-  // 2. 为X轴在确定的范围内生成月份标签
+  // 2. Generate month labels for X-axis within the determined range
   const monthLabels: string[] = [];
-  const monthKeys: string[] = []; // 用于内部映射, 例如 "2023-05"
+  const monthKeys: string[] = []; // For internal mapping, e.g., "2023-05"
   let currentMonthIterator = new Date(startMonthDate);
 
   for (let i = 0; i < numberOfMonthsToShow; i++) {
     monthLabels.push(format(currentMonthIterator, 'yyyy年M月', { locale: zhCN }));
-    monthKeys.push(format(currentMonthIterator, 'yyyy-MM')); // 用于数据聚合的键
+    monthKeys.push(format(currentMonthIterator, 'yyyy-MM')); // Key for data aggregation
     currentMonthIterator = addMonths(currentMonthIterator, 1);
   }
 
@@ -96,9 +98,9 @@ const MonthlySpendingLineChart: React.FC<MonthlySpendingLineChartProps> = ({
     return categoryMatch;
   });
 
-  // 4. 按月份聚合生成的 monthKeys 的支出
+  // 4. Aggregate expenses by month for the generated monthKeys
   const monthlyTotalsMap = new Map<string, number>();
-  monthKeys.forEach(key => monthlyTotalsMap.set(key, 0)); // 初始化范围内的所有月份为 0
+  monthKeys.forEach(key => monthlyTotalsMap.set(key, 0)); // Initialize all months in range to 0
 
   filteredExpenses.forEach(expense => {
     const expenseDate = new Date(expense.date);
@@ -111,10 +113,10 @@ const MonthlySpendingLineChart: React.FC<MonthlySpendingLineChartProps> = ({
   const monthlyTotalsData: number[] = monthKeys.map(key => monthlyTotalsMap.get(key) || 0);
 
   const selectedCategoryName = selectedCategoryId === 'all' 
-    ? '所有分类' 
-    : categories.find(c => c.id === selectedCategoryId)?.name || '选定分类';
+    ? t('allCategories')
+    : categories.find(c => c.id === selectedCategoryId)?.name || t('allCategories');
 
-  // 高亮显示 selectedMonth (即 endMonthDate) 对应的数据点
+  // Highlight the data point corresponding to selectedMonth (i.e., endMonthDate)
   const pointRadii = monthKeys.map(key => {
     const monthDateFromKey = parseISO(`${key}-01T00:00:00Z`);
     return isEqual(startOfMonth(monthDateFromKey), endMonthDate) ? 6 : 3; // 最后一个月使用更大的半径
@@ -167,7 +169,7 @@ const MonthlySpendingLineChart: React.FC<MonthlySpendingLineChartProps> = ({
             // tooltipItems 是一个数组，取第一个
             if (tooltipItems.length > 0) {
               const item = tooltipItems[0];
-              // item.label 已经是 'yyyy年M月' 格式，来自 chartData.labels
+              // item.label is already in 'yyyy年M月' format, from chartData.labels
               return item.label;
             }
             return '';
@@ -175,9 +177,9 @@ const MonthlySpendingLineChart: React.FC<MonthlySpendingLineChartProps> = ({
           label: function(context: any) {
             let label = context.dataset.label || '';
             if (label) {
-              label = label.split(" - ")[0]; // 工具提示行中仅显示类别名称
-              // context.label 已经是完整的年月字符串
-              // label += ` (${context.label})`; // 无需再次添加月份
+              label = label.split(" - ")[0]; // Show only category name in tooltip line
+              // context.label is already the complete year-month string
+              // label += ` (${context.label})`; // No need to add month again
               label += ': ';
             }
             if (context.parsed.y !== null) {

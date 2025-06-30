@@ -1,0 +1,134 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "submit": "Submit",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "submitting": "Submitting...",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "required": "Required",
+    "optional": "Optional"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "budget": "Budget Management",
+    "records": "Expense Records",
+    "subscriptions": "Subscriptions",
+    "settings": "Settings",
+    "categories": "Categories",
+    "charts": "Charts",
+    "accounts": "Accounts",
+    "add": "Add Record"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "pleaseLogin": "Please login to manage your budget.",
+    "loginToAccess": "Please login to access this page."
+  },
+  "budget": {
+    "title": "Budget Management",
+    "description": "Set and adjust your monthly budget here.",
+    "currentBudget": "Current Monthly Budget",
+    "noBudgetSet": "You haven't set a monthly budget yet.",
+    "setBudget": "Set Budget",
+    "editBudget": "Edit Budget",
+    "budgetModal": {
+      "setTitle": "Set Monthly Budget",
+      "editTitle": "Edit Monthly Budget",
+      "amount": "Budget Amount",
+      "placeholder": "e.g: 50000 (leave empty to clear)",
+      "clearHint": "Leave empty to clear budget setting"
+    }
+  },
+  "transactions": {
+    "addExpense": "Add Expense",
+    "createSubscription": "Create Subscription",
+    "amount": "Amount",
+    "category": "Category",
+    "date": "Date",
+    "note": "Note",
+    "selectCategory": "Please select category",
+    "addNote": "Add note...",
+    "nextMonthPayment": "Next month payment",
+    "installment": "Installment",
+    "installmentCount": "Number of installments",
+    "amountType": "Amount type",
+    "totalAmount": "Total amount",
+    "perInstallmentAmount": "Per installment amount",
+    "createNewCategory": "+ New Category"
+  },
+  "subscriptions": {
+    "title": "Subscription Management",
+    "name": "Subscription Name",
+    "description": "Description",
+    "monthlyAmount": "Monthly Amount",
+    "billingDay": "Monthly billing day",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "endDateOptional": "End Date (Optional)",
+    "endDateHint": "Leave empty for ongoing subscription",
+    "namePlaceholder": "e.g: Netflix Premium",
+    "descriptionPlaceholder": "Detailed description of the subscription service",
+    "billingDayFormat": "{day}th of each month",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "info": {
+      "monthlyAmount": "💰 {amount}/month",
+      "billingDay": "📅 {day}th each month",
+      "category": "🏷️ {category}",
+      "startDate": "📆 Started {date}",
+      "endDate": "🔚 Ends {date}"
+    }
+  },
+  "records": {
+    "title": "Expense Records",
+    "noRecords": "No expense records yet",
+    "addRecord": "Add Record"
+  },
+  "settings": {
+    "title": "User Settings",
+    "defaultRedirect": "Default redirect page after login",
+    "defaultRedirectDescription": "Choose the page you want to see first after opening the application",
+    "savePreferences": "Save Preferences",
+    "saveSuccess": "Settings saved successfully!",
+    "saveError": "Save failed, please try again.",
+    "networkError": "Network error occurred, please try again later."
+  },
+  "charts": {
+    "monthlySpending": "Monthly Spending Trend",
+    "categoryDistribution": "Category Spending Distribution",
+    "month": "Month",
+    "totalAmount": "Total Amount"
+  },
+  "forms": {
+    "validation": {
+      "required": "This field is required",
+      "positiveNumber": "Amount must be positive",
+      "selectCategory": "Please select a category",
+      "nameRequired": "Subscription name cannot be empty",
+      "nameMaxLength": "Subscription name cannot exceed 50 characters",
+      "descriptionMaxLength": "Description cannot exceed 200 characters",
+      "billingDayRange": "Billing day must be between 1-31",
+      "validStartDate": "Please enter a valid start date",
+      "validEndDate": "Please enter a valid end date",
+      "endDateAfterStart": "End date must be later than start date",
+      "installmentSettings": "Installment settings are incorrect: If installment is selected, the number of installments must be at least 2; If amount per installment is entered, installment must be selected."
+    }
+  },
+  "language": {
+    "select": "Select Language",
+    "chinese": "中文",
+    "english": "English",
+    "japanese": "日本語"
+  }
+}

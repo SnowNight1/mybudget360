@@ -7,10 +7,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateExpenseSchema, CreateExpenseInput, CategoryBasic } from '@/types';
 import { CreateSubscriptionSchema, CreateSubscriptionInput, TransactionMode } from '@/types/subscription';
 import { AmountInputType } from '@prisma/client';
-import { ExpenseWithCategory } from '@/app/dashboard/page';
+import { ExpenseWithCategory } from '@/app/[locale]/dashboard/page';
 import CategoryFormModal from '@/components/categories/CategoryFormModal';
 import { CategoryData } from '@/app/api/categories/route';
 import ModeSelector from '@/components/ModeSelector';
+import { useTransactionTranslations, useCommonTranslations, useSubscriptionTranslations } from '@/hooks/useTranslations';
 
 interface TransactionFormProps {
   categories: CategoryBasic[];
@@ -34,6 +35,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   onCategoryAdded,
   defaultMode = 'expense', // 新增：默认为普通支出
 }) => {
+  const t = useTransactionTranslations();
+  const common = useCommonTranslations();
+  const subscription = useSubscriptionTranslations();
+  
   // 状态管理
   const [currentCategories, setCurrentCategories] = useState<CategoryBasic[]>(categories);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -102,11 +107,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     setTransactionMode(mode);
   };
 
-  // 处理表单提交
+  // Handle form submission
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
       if (transactionMode === 'expense') {
-        // 提交普通支出
+        // Submit regular expense
         const expenseData = data as CreateExpenseInput;
         const response = await fetch('/api/transactions', {
           method: 'POST',
@@ -118,13 +123,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || '添加失败');
+          throw new Error(errorData.error || t('addFailed'));
         }
 
         const result = await response.json();
         onSuccess(result.expense);
       } else {
-        // 提交订阅
+        // Submit subscription
         const subscriptionData = data as CreateSubscriptionInput;
         const response = await fetch('/api/subscriptions', {
           method: 'POST',
@@ -136,16 +141,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || '创建订阅失败');
+          throw new Error(errorData.error || t('createSubscriptionFailed'));
         }
 
         const result = await response.json();
-        // 订阅创建成功，可以显示成功消息
+        // Subscription created successfully
         onClose();
       }
     } catch (error) {
-      console.error('提交失败:', error);
-      // 可以添加错误提示
+      console.error('Submit failed:', error);
+      // Can add error notification here
     }
   };
 
@@ -180,7 +185,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           {/* 标题 */}
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-900">
-              {transactionMode === 'expense' ? '添加支出' : '创建订阅'}
+              {expenseId ? 
+                (transactionMode === 'expense' ? t('editExpense') : t('editSubscription')) :
+                (transactionMode === 'expense' ? t('addExpense') : t('createSubscription'))
+              }
             </h2>
             <button
               onClick={onClose}
@@ -201,7 +209,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* 金额 */}
                 <div>
                   <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
-                    金额 <span className="text-red-500">*</span>
+                    {t('amount')} <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">¥</span>
@@ -224,14 +232,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">
-                      分类 <span className="text-red-500">*</span>
+                      {t('category')} <span className="text-red-500">*</span>
                     </label>
                     <button
                       type="button"
                       onClick={() => setIsCategoryModalOpen(true)}
                       className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                     >
-                      + 新建分类
+                      {t('createNewCategory')}
                     </button>
                   </div>
                   <select
@@ -239,7 +247,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     {...expenseForm.register('categoryId', { valueAsNumber: true })}
                   >
-                    <option value={0}>请选择分类</option>
+                    <option value={0}>{t('selectCategory')}</option>
                     {currentCategories.map((category) => (
                       <option key={category.id} value={category.id}>
                         {category.name}
@@ -254,7 +262,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* 日期 */}
                 <div>
                   <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
-                    日期 <span className="text-red-500">*</span>
+                    {t('date')} <span className="text-red-500">*</span>
                   </label>
                   <Controller
                     name="date"
@@ -277,12 +285,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* 备注 */}
                 <div>
                   <label htmlFor="note" className="block text-sm font-medium text-gray-700 mb-2">
-                    备注
+                    {t('note')}
                   </label>
                   <input
                     type="text"
                     id="note"
-                    placeholder="添加备注..."
+                    placeholder={t('addNote')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     {...expenseForm.register('note')}
                   />
@@ -297,7 +305,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     {...expenseForm.register('isNextMonthPayment')}
                   />
                   <label htmlFor="isNextMonthPayment" className="text-sm text-gray-700">
-                    下月还款
+                    {t('nextMonthPayment')}
                   </label>
                 </div>
 
@@ -310,7 +318,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     {...expenseForm.register('isInstallment')}
                   />
                   <label htmlFor="isInstallment" className="text-sm text-gray-700">
-                    分期付款
+                    {t('installment')}
                   </label>
                 </div>
 
@@ -318,7 +326,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {isInstallment && (
                   <div>
                     <label htmlFor="installmentCount" className="block text-sm font-medium text-gray-700 mb-2">
-                      分期期数
+                      {t('installmentCount')}
                     </label>
                     <input
                       type="number"
@@ -338,7 +346,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* 金额类型 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    金额类型
+                    {t('amountType')}
                   </label>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
@@ -350,7 +358,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         {...expenseForm.register('amountInputType')}
                       />
                       <label htmlFor="amountTotal" className="text-sm text-gray-700">
-                        总金额
+                        {t('totalAmount')}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -362,7 +370,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         {...expenseForm.register('amountInputType')}
                       />
                       <label htmlFor="amountMonthly" className="text-sm text-gray-700">
-                        每期金额
+                        {t('perInstallmentAmount')}
                       </label>
                     </div>
                   </div>
@@ -374,12 +382,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* 订阅名称 */}
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    订阅名称 <span className="text-red-500">*</span>
+                    {subscription('name')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     id="name"
-                    placeholder="如: Netflix Premium"
+                    placeholder={subscription('namePlaceholder')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     {...subscriptionForm.register('name')}
                   />
@@ -391,12 +399,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* 描述 */}
                 <div>
                   <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                    描述（可选）
+                    {subscription('description')}（{common('optional')}）
                   </label>
                   <input
                     type="text"
                     id="description"
-                    placeholder="订阅服务的详细描述"
+                    placeholder={subscription('descriptionPlaceholder')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     {...subscriptionForm.register('description')}
                   />
@@ -405,7 +413,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* 金额 */}
                 <div>
                   <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
-                    每月金额 <span className="text-red-500">*</span>
+                    {subscription('monthlyAmount')} <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">¥</span>
@@ -428,14 +436,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">
-                      分类 <span className="text-red-500">*</span>
+                      {t('category')} <span className="text-red-500">*</span>
                     </label>
                     <button
                       type="button"
                       onClick={() => setIsCategoryModalOpen(true)}
                       className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                     >
-                      + 新建分类
+                      {t('createNewCategory')}
                     </button>
                   </div>
                   <select
@@ -443,7 +451,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     {...subscriptionForm.register('categoryId', { valueAsNumber: true })}
                   >
-                    <option value={0}>请选择分类</option>
+                    <option value={0}>{t('selectCategory')}</option>
                     {currentCategories.map((category) => (
                       <option key={category.id} value={category.id}>
                         {category.name}
@@ -458,7 +466,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* 账单日 */}
                 <div>
                   <label htmlFor="billingDay" className="block text-sm font-medium text-gray-700 mb-2">
-                    每月账单日 <span className="text-red-500">*</span>
+                    {subscription('billingDay')} <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="billingDay"
@@ -467,7 +475,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   >
                     {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
                       <option key={day} value={day}>
-                        每月 {day} 号
+                        {subscription('billingDayFormat', { day })}
                       </option>
                     ))}
                   </select>
@@ -479,7 +487,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* 开始日期 */}
                 <div>
                   <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
-                    开始日期 <span className="text-red-500">*</span>
+                    {subscription('startDate')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -495,7 +503,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* 结束日期 */}
                 <div>
                   <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
-                    结束日期（可选）
+                    {subscription('endDateOptional')}
                   </label>
                   <input
                     type="date"
@@ -503,7 +511,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     {...subscriptionForm.register('endDate')}
                   />
-                  <p className="mt-1 text-xs text-gray-500">留空表示长期订阅</p>
+                  <p className="mt-1 text-xs text-gray-500">{subscription('endDateHint')}</p>
                 </div>
               </>
             )}
@@ -515,7 +523,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 onClick={onClose}
                 className="flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
               >
-                取消
+                {common('cancel')}
               </button>
               <button
                 type="submit"
@@ -523,10 +531,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isSubmitting 
-                  ? '提交中...' 
+                  ? common('submitting')
                   : transactionMode === 'expense' 
-                    ? '添加支出' 
-                    : '创建订阅'
+                    ? t('addExpense')
+                    : t('createSubscription')
                 }
               </button>
             </div>
